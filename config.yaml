@@ -1,0 +1,20 @@
+checkpoint_file:  ".date_checkpoint.txt"
+regex:
+  dept_date_pattern: "_(D\\d{2,3}|R\\d{2,3})_(\\d{4}-\\d{2}-\\d{2})"
+  prefix_pattern: "(BDTOPO_(\\d+-\\d+))_"
+
+scraping:
+  dep_start_div_id: telechargementgpkgdep
+  dep_end_div_id: telechargementtransportter
+
+
+
+
+siren_api_url: "https://api.insee.fr/api-sirene/3.11/"
+bodacc_api_url: "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records"
+
+
+database:
+  connect_timeout: 5
+  connection_string: "dbname=ccin_baseco user=usr_ccin_stage  host=10.254.10.3 port=5432"
+  connect_timeout: 5
