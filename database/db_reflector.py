@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine, MetaData, Table, text, Column
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
+from geoalchemy2 import Geometry
 from typing import Optional, List
 
 from ..utils import get_logger  # import ton logger depuis logger.py
@@ -22,7 +23,7 @@ class DBReflector:
             self.engine = create_engine(self.connection_string)
             self.connection = self.engine.connect()
             self.metadata = MetaData()
-            logger.info("Connexion réussie à la base de données.")
+            logger.debug("Connexion réussie à la base de données.")
         except SQLAlchemyError as e:
             logger.error(f"Erreur de connexion : {e}")
             raise
@@ -34,27 +35,19 @@ class DBReflector:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.connection:
             self.connection.close()
-            logger.info("Connexion fermée proprement.")
+            logger.debug("Connexion fermée proprement.")
         if self.engine:
             self.engine.dispose()
-            logger.info("Engine SQLAlchemy libéré.")
+            logger.debug("Engine SQLAlchemy libéré.")
 
     def get_table(self, table_name: str, schema: Optional[str] = None) -> Optional[Table]:
-        if self.metadata is None:
-            raise RuntimeError("Connexion non initialisée.")
-
         try:
-            table = Table(
-                table_name,
-                self.metadata,
-                autoload_with=self.engine,
-                schema=schema
-            )
-            logger.info(f"Table chargée : {schema}.{table_name}")
-            return table
+            # Charger la table avec réflexion
+            return Table(table_name, self.metadata, autoload_with=self.engine, schema=schema)
         except SQLAlchemyError as e:
-            logger.error(f"Impossible de charger la table {schema}.{table_name} : {e}")
+            logger.error(f"Erreur lors de la réflexion de la table {schema}.{table_name}: {e}")
             return None
+
 
     def get_all_schemas(self) -> List[str]:
         if self.engine is None:
