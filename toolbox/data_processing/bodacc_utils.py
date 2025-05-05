@@ -1,7 +1,8 @@
 import re
-from datetime import datetime
-import pandas as pd
+import pytz
 import json
+import pandas as pd
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
@@ -213,6 +214,14 @@ def extract_jugement_variable(dataframe : pd.DataFrame):
 def clean_columns(df):
     # Extraire les 9 premiers caractères sans espaces
     df["SIREN"] = df["registre"].str.replace(" ", "", regex=False).str[:9]
+    
+
+    df_bodac_76.SIREN = df_bodac_76.SIREN.astype(str)
+        .str.replace(" ", "").str.replace("-", "")
+        .str.replace(".", "").str.replace(",", "")
+        .str.replace("'", "").str.replace("(", "")
+        .str.replace(")", "").str.replace("/", "")
+        .str.replace("\\", "")
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
@@ -346,3 +355,23 @@ def remove_no_siren_rows(df):
     Supprime les lignes sans SIREN
     """
     return df[~df["SIREN"].isnull() & (df["SIREN"] != "")]
+
+
+def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
+    paris_tz = pytz.timezone("Europe/Paris")
+
+    date_columns = [col for col in df.columns if "date" in col.lower()]
+
+    for col in date_columns:
+        try:
+            # Conversion en datetime, erreurs ignorées pour les valeurs non valides
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+
+            # Localisation + conversion en ISO 8601 (optionnel selon données)
+            df[col] = df[col].dt.tz_localize('Europe/Paris', ambiguous='NaT', nonexistent='NaT', errors='coerce') \
+                             .dt.tz_convert('UTC') \
+                             .dt.strftime('%Y-%m-%dT%H:%M:%SZ')  # ISO format en UTC
+        except Exception as e:
+            print(f"Erreur lors du traitement de la colonne {col}: {e}")
+
+    return df

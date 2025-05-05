@@ -1,6 +1,10 @@
+import pandas as pd
 from sqlalchemy import Table, MetaData, select
 from sqlalchemy.engine import Engine
-from ..utils import logger  # Assure-toi que ton logger est bien importé
+from ..utils import get_logger  # Assure-toi que ton logger est bien importé
+
+
+logger = get_logger()
 
 class TableRepository:
     def __init__(self, engine: Engine, schema: str, table_name: str):
@@ -25,7 +29,9 @@ class TableRepository:
         self.table = Table(table_name, self.metadata, autoload_with=engine, schema=schema)
         logger.info(f"Table '{schema}.{table_name}' chargée avec succès.")
 
-    def find_all(self, limit=100):
+
+
+    def find_all(self, limit=100, return_df=False):
         """
         Récupère toutes les lignes de la table avec une limite optionnelle.
         :param limit: nombre max de résultats
@@ -35,16 +41,32 @@ class TableRepository:
         stmt = select(self.table).limit(limit)
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
-            return result.fetchall()
+            if return_df:
+                return self.__return_df(result)
+            else:   
+                return result.fetchall()
 
-    def find_by_column(self, column_name: str, value):
+    def find_by_column(self, column_name: str, value, colums=None, return_df=False):
         if column_name not in self.table.columns:
             raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
-        
-        stmt = select(self.table).where(self.table.c[column_name] == value)
+    
+        # Vérification des colonnes demandées
+        if columns:
+            invalid_cols = [col for col in columns if col not in self.table.columns]
+            if invalid_cols:
+                raise ValueError(f"Colonnes demandées non valides : {invalid_cols}")
+            selected_columns = [self.table.c[col] for col in columns]
+        else:
+            selected_columns = [self.table]  # Sélectionne toutes les colonnes
+
+        stmt = select(*selected_columns).where(self.table.c[column_name] == value)
+
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
-            return result.fetchall()
+            if return_df:
+                return self.__return_df(result)
+            else:
+                return result.fetchall()
     
     def find_by_conditions(self, conditions: dict, logical_operator='AND', limit=100):
         """
@@ -79,8 +101,25 @@ class TableRepository:
             result = conn.execute(stmt)
             return result.fetchall()
 
+    def count(self):
+        """Compte le nombre de lignes dans la table."""
+        stmt = select([func.count()]).select_from(self.table)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
+            return result.scalar()
+
+    def get_columns(self):
+        """Récupère les noms des colonnes de la table."""
+        return [col.name for col in self.table.columns]
+
     def raw_query(self, stmt):
         """Permet d'exécuter une requête SQLAlchemy manuellement construite sur la table."""
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             return result.fetchall()
+
+    def __return_df(self, result):
+        """Convertit le résultat en DataFrame."""
+        if not result:
+            return pd.DataFrame()
+        return pd.DataFrame(result.fetchall(), columns=result.keys())

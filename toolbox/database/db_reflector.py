@@ -1,8 +1,13 @@
-from sqlalchemy import create_engine, MetaData, Table, text, Column
-from sqlalchemy.engine import Engine
-from sqlalchemy.exc import SQLAlchemyError
+import pandas as pd
 from geoalchemy2 import Geometry
 from typing import Optional, List
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import create_engine, MetaData, Table, text, Column,inspect
+from sqlalchemy.types import String, Integer, Float, Boolean, Date, DateTime
+
+
+
 
 from ..utils import get_logger  # import ton logger depuis logger.py
 
@@ -39,6 +44,14 @@ class DBReflector:
         if self.engine:
             self.engine.dispose()
             logger.debug("Engine SQLAlchemy libéré.")
+    
+    def table_exists(self, schema: str, table_name: str):
+        """
+        Vérifie si une table existe dans un schéma donné.
+        """
+        inspector = inspect(self.engine)
+        # Vérifie si le nom de la table existe dans les tables du schéma
+        return table_name in inspector.get_table_names(schema=schema)
 
     def get_table(self, table_name: str, schema: Optional[str] = None) -> Optional[Table]:
         try:
@@ -77,3 +90,45 @@ class DBReflector:
         except SQLAlchemyError as e:
             logger.error(f"Erreur lors de la récupération des tables : {e}")
             return []
+
+    def map_dtype(self, dtype):
+        """Mappe les dtypes pandas vers des types SQLAlchemy."""
+        if pd.api.types.is_integer_dtype(dtype):
+            return Integer()
+        elif pd.api.types.is_float_dtype(dtype):
+            return Float()
+        elif pd.api.types.is_bool_dtype(dtype):
+            return Boolean()
+        elif pd.api.types.is_datetime64_any_dtype(dtype):
+            return DateTime()
+        else:
+            return String()
+
+    def create_table_from_dataframe(self, schema: str, table_name: str, df: pd.DataFrame, if_exists="fail"):
+        """
+        Crée une table dans la base à partir d'un DataFrame.
+
+        :param schema: nom du schéma cible
+        :param table_name: nom de la table à créer
+        :param df: pandas DataFrame à utiliser comme modèle
+        :param if_exists: 'fail' | 'replace' | 'append'
+        """
+        metadata = MetaData(schema=schema)
+        columns = [
+            Column(col_name, self.map_dtype(dtype))
+            for col_name, dtype in df.dtypes.items()
+        ]
+
+        table = Table(table_name, metadata, *columns)
+
+        if if_exists == "replace":
+            table.drop(self.engine, checkfirst=True)
+
+        if if_exists in ["replace", "fail"]:
+            table.create(self.engine, checkfirst=(if_exists == "fail"))
+
+        elif if_exists == "append":
+            if not self.engine.dialect.has_table(self.engine.connect(), table_name, schema=schema):
+                table.create(self.engine)
+
+        return table

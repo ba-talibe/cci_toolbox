@@ -1,5 +1,5 @@
 import pytest
-from data_processing import *
+from toolbox.data_processing import *
 
 @pytest.mark.parametrize("input_text, expected_output", [
     ("un mois", "1 mois"),

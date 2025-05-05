@@ -20,3 +20,9 @@ env/
 
 .env
 *.env
+
+.spyproject
+.spyderproject
+*.spydata
+*.spyderworkspace
+*.spyder
