@@ -216,12 +216,12 @@ def clean_columns(df):
     df["SIREN"] = df["registre"].str.replace(" ", "", regex=False).str[:9]
     
 
-    df_bodac_76.SIREN = df_bodac_76.SIREN.astype(str)
-        .str.replace(" ", "").str.replace("-", "")
-        .str.replace(".", "").str.replace(",", "")
-        .str.replace("'", "").str.replace("(", "")
-        .str.replace(")", "").str.replace("/", "")
-        .str.replace("\\", "")
+    df.SIREN = df.SIREN.astype(str) \
+    .str.replace(" ", "").str.replace("-", "") \
+    .str.replace(".", "").str.replace(",", "") \
+    .str.replace("'", "").str.replace("(", "") \
+    .str.replace(")", "").str.replace("/", "") \
+    .str.replace("\\", "")
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
