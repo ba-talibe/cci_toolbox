@@ -26,3 +26,5 @@ env/
 *.spydata
 *.spyderworkspace
 *.spyder
+
+workspace
