@@ -375,3 +375,16 @@ def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
             print(f"Erreur lors du traitement de la colonne {col}: {e}")
 
     return df
+
+def clean_cleaning_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Pipeline de nettoyage des données
+    """
+    df = extract_jugement_variable(df)
+    df = clean_columns(df)
+    df = remove_no_siren_rows(df)
+    df = clean_dates(df)
+
+    df = process_judgements_contains(df)
+
+    return df
