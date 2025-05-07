@@ -19,7 +19,3 @@ une documenattion sera bientot mise à disposition
 
 ## Licence
 Ce projet est sous licence [MIT License](LICENSE).
-
-1. installer le module à travers github
-    ```
-    pip install git+https://github.com/ba-talibe
