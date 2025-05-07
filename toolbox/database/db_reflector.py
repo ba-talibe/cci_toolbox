@@ -1,7 +1,7 @@
 import pandas as pd
 from geoalchemy2 import Geometry
 from typing import Optional, List
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, Connection
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import create_engine, MetaData, Table, text, Column,inspect
 from sqlalchemy.types import String, Integer, Float, Boolean, Date, DateTime
