@@ -67,6 +67,28 @@ corrections_caracteres = {
     "Â": "",  # Souvent résidu vide
 }
 
+def clean_chaine(chaine):
+    """
+    Nettoie une chaine de caractère en :
+        - remplaçant les '.' par '_'
+        - insérant un '_' avant chaque majuscule sauf si elle est en début de chaîne
+        - conservant les suites de majuscules comme un seul mot
+        - remplaçant les doubles underscores par un seul underscore
+        - Convertissant en minuscules
+    Args: 
+        chaine (str): La chaine de caractères à nettoyer.
+    Returns:
+        str: La chaine de caractères nettoyée.
+    """
+    # Remplacer les '.' par '_'
+    chaine = chaine.replace('.', '_')
+    # Insérer un '_' avant une majuscule qui suit une minuscule ou un chiffre
+    chaine = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', chaine)
+    # Remplacer les doubles underscores par un seul underscore
+    chaine = re.sub(r'__+', '_', chaine)
+    # Convertir en minuscules
+    return chaine.lower()
+
 def ajouter_espace(x):
     """
     Ajoute un espace entre les lettres et les chiffres si collés : "TEST123" -> "TEST 123"
@@ -214,14 +236,6 @@ def extract_jugement_variable(dataframe : pd.DataFrame):
 def clean_columns(df):
     # Extraire les 9 premiers caractères sans espaces
     df["SIREN"] = df["registre"].str.replace(" ", "", regex=False).str[:9]
-    
-
-    df.SIREN = df.SIREN.astype(str) \
-    .str.replace(" ", "").str.replace("-", "") \
-    .str.replace(".", "").str.replace(",", "") \
-    .str.replace("'", "").str.replace("(", "") \
-    .str.replace(")", "").str.replace("/", "") \
-    .str.replace("\\", "")
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
