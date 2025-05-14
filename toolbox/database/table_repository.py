@@ -68,7 +68,7 @@ class TableRepository:
             else:
                 return result.fetchall()
     
-    def find_by_conditions(self, conditions: dict, logical_operator='AND', limit=100):
+    def find_by_conditions(self, conditions: dict, logical_operator='AND', columns=None, limit=100):
         """
         Récupère les lignes correspondant aux conditions.
         :param conditions: dict avec {colonne: valeur}
@@ -83,6 +83,15 @@ class TableRepository:
         if invalid_cols:
             raise ValueError(f"Colonnes inexistantes : {invalid_cols}")
 
+        # Vérification des colonnes demandées
+        if columns:
+            invalid_cols = [col for col in columns if col not in self.table.columns]
+            if invalid_cols:
+                raise ValueError(f"Colonnes demandées non valides : {invalid_cols}")
+            selected_columns = [self.table.c[col] for col in columns]
+        else:
+            selected_columns = [self.table]  # Sélectionne toutes les colonnes
+        
         expressions = [
             self.table.c[col] == val
             for col, val in conditions.items()
@@ -95,7 +104,7 @@ class TableRepository:
         else:
             raise ValueError("logical_operator doit être 'AND' ou 'OR'")
 
-        stmt = select(self.table).where(where_clause).limit(limit)
+        stmt = select(*selected_columns).where(where_clause).limit(limit)
 
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
