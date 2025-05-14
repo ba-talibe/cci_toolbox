@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import Table, MetaData, select
+from sqlalchemy import Table, MetaData, select, and_, or_, func
 from sqlalchemy.engine import Engine
 from ..utils import get_logger  # Assure-toi que ton logger est bien importé
 
@@ -17,7 +17,7 @@ class TableRepository:
         if not isinstance(engine, Engine):
             raise ValueError("L'argument 'engine' doit être une instance de SQLAlchemy Engine.")
         if not isinstance(schema, str) or not isinstance(table_name, str):
-            raise ValueError("Les arguments 'schema' et 'table_name' doivent être des chaînes de caractères.")
+            raise ValueError("Les arguments 'schema' et 'table_name' doivent être des chaînes de caractères.", type(schema), type(table_name))
         if not schema or not table_name:
             raise ValueError("Le schéma et le nom de la table ne peuvent pas être vides.")
 
@@ -46,7 +46,7 @@ class TableRepository:
             else:   
                 return result.fetchall()
 
-    def find_by_column(self, column_name: str, value, colums=None, return_df=False):
+    def find_by_column(self, column_name: str, value, columns=None, return_df=False):
         if column_name not in self.table.columns:
             raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
     
