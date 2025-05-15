@@ -1,4 +1,4 @@
-
+import re
 
 corrections_caracteres = {
     "Ã§": "ç",
