@@ -30,12 +30,12 @@ class BaseRepository:
             return cur.fetchall()
 
     def get_schemas(self) -> List[str]:
-            """
-            Retourne la liste des schémas disponibles.
-            """
-            query = "SELECT schema_name FROM information_schema.schemata;"
-            result = self.fetch_all(query)
-            return [row[0] for row in result]
+        """
+        Retourne la liste des schémas disponibles.
+        """
+        query = "SELECT schema_name FROM information_schema.schemata;"
+        result = self.fetch_all(query)
+        return [row[0] for row in result]
 
     def get_tables(self, schema: str = 'public') -> List[str]:
         """
@@ -79,7 +79,7 @@ class EtablissementRepository(BaseRepository):
             columns = "*"
         else:
             columns_string = ",".join(columns)
-
+        
         query =f"SELECT {columns_string} FROM {self.table_name} WHERE siret=%s;"
         result = self.fetch_one(query, (siret,))
         
