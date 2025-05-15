@@ -81,7 +81,7 @@ def clean_chaine(chaine):
 
 
 
-    def ajouter_espace(x):
+def ajouter_espace(x):
     """
     Ajoute un espace entre les lettres et les chiffres si collés : "TEST123" -> "TEST 123"
     """

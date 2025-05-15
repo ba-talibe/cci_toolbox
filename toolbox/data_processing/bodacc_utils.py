@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-
+from .date_utils import *
+from .str_utils import *
 
 
 
@@ -62,10 +63,11 @@ def extract_jugement_variable(dataframe : pd.DataFrame):
 
 
 
-
-
 def clean_columns(df):
     # Extraire les 9 premiers caractères sans espaces
+    df["registre"] = df["registre"].apply(
+        lambda x: ",".join(x) if isinstance(x, list) else x
+        )
     df["SIREN"] = df["registre"].str.replace(" ", "", regex=False).str[:9]
 
     # --- Nettoyage ponctuation ---
