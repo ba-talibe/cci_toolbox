@@ -61,14 +61,25 @@ def extract_jugement_variable(dataframe : pd.DataFrame):
 
     return dataframe
 
+def convert_int_to_str_columns(df):
+    """
+    Convertit les colonnes de type int64 en str64
+    """
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = df[col].astype(str)
+    return df
 
 
 def clean_columns(df):
-    # Extraire les 9 premiers caractères sans espaces
-    df["registre"] = df["registre"].apply(
-        lambda x: ",".join(x) if isinstance(x, list) else x
-        )
-    df["SIREN"] = df["registre"].str.replace(" ", "", regex=False).str[:9]
+    def extraire_premier_registre(val):
+        if not isinstance(val, str):
+            return None
+        match = re.search(r"'([^']+)'", val)
+        if match:
+            return match.group(1)
+        return None
+
+        df["SIREN"] = df["registre"].apply(extraire_premier_registre)
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
@@ -84,7 +95,7 @@ def filter_and_group(df, col, pattern):
     return df[mask].sort_values(by=["SIREN", "date"], ascending=[True, False]).drop_duplicates("SIREN")
 
 
-def process_judgements_contains(df):
+def process_judgements_columns(df):
     lj = filter_and_group(df, "nature", r"jugement.*liquidation judiciaire")
     ljc = filter_and_group(df, "nature", r"arr..t.*cour.*appel")
     pr = filter_and_group(df, "nature", r"plan de redressement")
@@ -111,7 +122,7 @@ def process_judgements_contains(df):
             extrait = re.search(r"(.{2,10})\s(?:ans|annees|annee|années|année|an|nomme)", str(texte))
             brut = extrait.group(1) if extrait else ""
             cm.append(remplacer_nombres_francais(brut))
-
+        
         annes = []
         for txt in cm:
             extrait = re.search(r"(\d+)", str(txt))
@@ -133,8 +144,12 @@ def process_judgements_contains(df):
 
         pr["duree_mois"] = mois
 
-        # Calcul de la date de fin
-        pr["date_fin"] = pr["date"].apply(bi_date) + pr.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
+        try:
+            # Calcul de la date de fin
+            pr["date_fin"] = pr["date"].apply(bi_date) + pr.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
+        except Exception as e:
+            logging.error(f"Erreur lors du calcul de la date de fin pour le plan de redressement: {e}")
+            pr["date_fin"] = pd.NaT
 
         
     # --- Extraction durée de sauvegarde ---
@@ -170,7 +185,11 @@ def process_judgements_contains(df):
         ps["duree_mois"] = mois
 
         # Calcul de la date de fin
-        ps["date_fin"] = ps["date"].apply(bi_date) + ps.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
+        try:
+            ps["date_fin"] =  ps["date"].apply(bi_date) + ps.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
+        except Exception as e:
+            logging.error(f"Erreur lors du calcul de la date de fin pour le plan de sauvegarde: {e}")
+            ps["date_fin"] = pd.NaT
 
 
         # fusion des données de sauvegarde et de redressement
@@ -234,7 +253,7 @@ def clean_cleaning_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     df = clean_columns(df)
     df = remove_no_siren_rows(df)
     df = clean_dates(df)
-
-    df = process_judgements_contains(df)
+    df = convert_int_to_str_columns(df)
+    df = process_judgements_columns(df)
 
     return df
