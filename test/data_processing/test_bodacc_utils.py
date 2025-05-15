@@ -42,8 +42,7 @@ def test_extract_jugement_variable(df_with_jugement_extracted):
 
 
 def test_clean_columns(df_with_jugement_extracted):
-    df = extract_jugement_variable(df)
-    df = clean_columns(df)
+    df = clean_columns(df_with_jugement_extracted)
     assert "SIREN" in df.columns
     assert df.loc[0, "SIREN"] == "841774730"
     assert ";" not in df["commercant"].iloc[0]
