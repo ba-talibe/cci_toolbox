@@ -2,180 +2,11 @@ import re
 import pytz
 import json
 import pandas as pd
-from datetime import datetime
+import numpy as np
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
 
-
-
-
-
-corrections_caracteres = {
-    "Ã§": "ç",
-    "ã§": "ç",
-    "Ã©": "é",
-    "Ã¨": "è",
-    "Ãª": "ê",
-    "Ã«": "ë",
-    "Ã ": "à",
-    "Ã¢": "â",
-    "Ã¤": "ä",
-    "Ã¹": "ù",
-    "Ã»": "û",
-    "Ã¼": "ü",
-    "Ã´": "ô",
-    "Ã¶": "ö",
-    "Ã®": "î",
-    "Ã¯": "ï",
-    "ÃŸ": "ß",
-    "Ã˜": "Ø",
-    "Ã˜": "ø",
-    "Ã…": "Å",
-    "Ã¥": "å",
-    "Ã†": "Æ",
-    "Ã¦": "æ",
-    "Ã‡": "Ç",
-    "Ã‰": "É",
-    "Ãˆ": "È",
-    "ÃŠ": "Ê",
-    "Ã‹": "Ë",
-    "Ã€": "À",
-    "Ã‚": "Â",
-    "Ã„": "Ä",
-    "ÃÔ": "Ô",
-    "Ã–": "Ö",
-    "Ãœ": "Ü",
-    "Ã‚": "Â",
-    "â€™": "’",
-    "â€œ": "“",
-    "â€�": "”",
-    "â€“": "–",
-    "â€”": "—",
-    "â€": "†",
-    "â€¢": "•",
-    "â‚¬": "€",
-    "â„¢": "™",
-    "â€˜": "‘",
-    "â€¡": "‡",
-    "Â«": "«",
-    "Â»": "»",
-    "Â°": "°",
-    "Â²": "²",
-    "Â³": "³",
-    "Âµ": "µ",
-    "Â·": "·",
-    "Â": "",  # Souvent résidu vide
-}
-
-def clean_chaine(chaine):
-    """
-    Nettoie une chaine de caractère en :
-        - remplaçant les '.' par '_'
-        - insérant un '_' avant chaque majuscule sauf si elle est en début de chaîne
-        - conservant les suites de majuscules comme un seul mot
-        - remplaçant les doubles underscores par un seul underscore
-        - Convertissant en minuscules
-    Args: 
-        chaine (str): La chaine de caractères à nettoyer.
-    Returns:
-        str: La chaine de caractères nettoyée.
-    """
-    # Remplacer les '.' par '_'
-    chaine = chaine.replace('.', '_')
-    # Insérer un '_' avant une majuscule qui suit une minuscule ou un chiffre
-    chaine = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', chaine)
-    # Remplacer les doubles underscores par un seul underscore
-    chaine = re.sub(r'__+', '_', chaine)
-    # Convertir en minuscules
-    return chaine.lower()
-
-def ajouter_espace(x):
-    """
-    Ajoute un espace entre les lettres et les chiffres si collés : "TEST123" -> "TEST 123"
-    """
-    return re.sub(r"(?<=[A-Za-z])(?=\d)|(?<=\d)(?=[A-Za-z])", " ", str(x))
-
-
-def mois_fr_vers_num(mois):
-    """
-    Convertit un mois en français vers un numéro (ex: "janvier" -> 1)
-    """
-    mois = mois.lower()
-    mois_dict = {
-        'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5, 'juin': 6,
-        'juillet': 7, 'août': 8, 'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12
-    }
-    return mois_dict.get(mois)
-
-
-def inverse_date(date_str):
-    """
-    Inverse une date de format JJ/MM/AAAA -> AAAA-MM-JJ
-    """
-    try:
-        d = datetime.strptime(date_str, "%d/%m/%Y")
-        return d.strftime("%Y-%m-%d")
-    except Exception:
-        return None
-
-def remplacer_nombres_francais(chaine):
-    correspondances = {
-        "onze": "11", "douze": "12", "treize": "13",
-        "quatorze": "14", "quinze": "15", "seize": "16",
-        "dix-sept": "17", "dix-huit": "18", "dix-neuf": "19", "vingt": "20",
-        "un": "1", "deux": "2", "trois": "3", "quatre": "4",
-        "cinq": "5", "six": "6", "sept": "7", "huit": "8", "neuf": "9",
-        "dix": "10"
-    }
-
-    if not chaine:
-        return ""
-
-    for mot, chiffre in correspondances.items():
-        # ✅ Utilise \b sans double échappement
-        chaine = re.sub(rf"\b{mot}\b", chiffre, chaine, flags=re.IGNORECASE)
-
-    return chaine
-
-def nettoyage_texte(txt):
-    """
-    Nettoie et normalise un texte : supprime les doublons d'espaces, met en minuscule
-    """
-    if not txt:
-        return ""
-    txt = re.sub(r"\s+", " ", txt)
-    return txt.strip().lower()
-
-
-def extraire_annees(txt):
-    """
-    Extrait une durée en années depuis un texte (ex: "durée 3 ans")
-    """
-    match = re.search(r"(\d+)\s*(an|ans)", txt, re.IGNORECASE)
-    return int(match.group(1)) if match else None
-
-
-def extraire_mois(txt):
-    """
-    Extrait une durée en mois depuis un texte (ex: "durée 6 mois")
-    """
-    match = re.search(r"(\d+)\s*(mois)", txt, re.IGNORECASE)
-    return int(match.group(1)) if match else None
-
-
-def bi_date(d):
-    """
-    Si la date est un 29 février, retourne le 1er mars de la même année.
-    Sinon, retourne la date telle quelle.
-    """
-    if pd.isnull(d):
-        return None
-    if isinstance(d, str):
-        d = pd.to_datetime(d, errors="coerce")
-
-    if d.month == 2 and d.day == 29:
-        return datetime(d.year, 3, 1)
-    return d
 
 
 def create_jugement_variable_extractor(variable_name):
@@ -371,7 +202,7 @@ def remove_no_siren_rows(df):
     return df[~df["SIREN"].isnull() & (df["SIREN"] != "")]
 
 
-def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
+def clean_dates(df: pd.DataFrame, date_type : str ="date") -> pd.DataFrame:
     paris_tz = pytz.timezone("Europe/Paris")
 
     date_columns = [col for col in df.columns if "date" in col.lower()]
@@ -382,9 +213,12 @@ def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
             df[col] = pd.to_datetime(df[col], errors='coerce')
 
             # Localisation + conversion en ISO 8601 (optionnel selon données)
-            df[col] = df[col].dt.tz_localize('Europe/Paris', ambiguous='NaT', nonexistent='NaT', errors='coerce') \
-                             .dt.tz_convert('UTC') \
-                             .dt.strftime('%Y-%m-%dT%H:%M:%SZ')  # ISO format en UTC
+            if date_type == "date":
+                df [col] = pd.to_datetime(df[col], errors='coerce').dt.normalize()
+            else:
+                df[col] = df[col].dt.tz_localize('Europe/Paris', ambiguous='NaT', nonexistent='NaT', errors='coerce') \
+                                .dt.tz_convert('UTC') \
+                                .dt.strftime('%Y-%m-%dT%H:%M:%SZ')  # ISO format en UTC
         except Exception as e:
             print(f"Erreur lors du traitement de la colonne {col}: {e}")
 
