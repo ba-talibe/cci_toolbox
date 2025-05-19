@@ -1,26 +1,20 @@
+import re
 import os
-from typing import Optional, Dict, Any
-from dotenv import load_dotenv
 import requests
+from dotenv import load_dotenv
+from typing import Optional, Dict, Any
+from .api_client import APIClient
 
 
-
-class SirenAPIClient:
+class SirenAPIClient(APIClient):
     """
     Client pour interagir avec une API REST.
     """
 
-    def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None, siren_api_key: Optional[str] = None):
+    def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None, logger: Optional[Any] = None, siren_api_key: Optional[str] = None, cache_dir: Optional[str] = "siren_cache"):
         assert base_url, "L'URL de base ne peut pas être vide."
-        self.base_url = base_url.rstrip('/')
-        self.session = requests.Session()
-        default_headers =  {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        if headers:
-            default_headers.update(headers)
-        self.session.headers.update(default_headers)
+        
+        super().__init__(base_url, headers, logger, cache_dir)
         self.siren_api_key = siren_api_key
         if siren_api_key:
             self.session.headers.update({'X-INSEE-Api-Key-Integration': siren_api_key})
@@ -33,12 +27,33 @@ class SirenAPIClient:
         :param params: Paramètres de requête facultatifs.
         :return: Données JSON en réponse ou None en cas d'erreur.
         """
+        match = re.search(r"/(?:siren|siret)/(\d{9}|\d{14})", endpoint)
+        if match:
+            cache_key = match.group(0)
+            if cache_key == "siren":
+                cache_key = cache_key
+            elif cache_key == "siret":
+                cache_key = cache_key[:9]
+
+            cached_data = self._read_cache(cache_key)
+
+            if cache_key == "siren":    
+                return cached_data
+            elif cache_key == "siret":
+                for etablissement in cached_data:
+                    if etablissement.get("siret") == cache_key:
+                        return etablissement
+
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
             response = self.session.get(url, params=params)
             response.raise_for_status()
             # print(response.url)
-            return response.json()
+            data = response.json()
+
+            if cache_key == "siren":
+                self._write_cache(cache_key, data)
+            return data
         except requests.exceptions.HTTPError as e:
             print(f"[HTTP ERROR] {e} - Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
@@ -70,7 +85,6 @@ class SirenAPIClient:
     def get_data_by_siren(self, siren: str, params : Optional[Dict[str, Any]]=None,) -> Optional[Dict[str, Any]]:
         """
         Récupère les données d'un etablissement pour un numéro SIREN donné.
-
         """
         endpoint = f"/siren/{siren}"
         data = self.get(endpoint)
@@ -83,7 +97,6 @@ class SirenAPIClient:
     def get_data_by_siret(self, siret: str, params : Optional[Dict[str, Any]]=None) -> Optional[Dict[str, Any]]:
         """
         Récupère les données SIRET pour un numéro SIRET donné.
-
         """
         endpoint = f"/siret/{siret}"
         data = self.get(endpoint)
@@ -103,29 +116,3 @@ class SirenAPIClient:
         else:
             print(f"Erreur lors de la récupération des données pour l'endpoint {endpoint}.")
             return None
-
-
-if __name__ == "__main__":
-    # Exemple d'utilisation
-    siren = "889932059"
-    siret = "88993205900013"
-
-    os.environ["siren_api_key"] = "34989d4c-5795-469b-989d-4c5795469b79"
-    os.environ["siren_api_url"] = "https://api.insee.fr/api-sirene/3.11/"
-
-    siren_api_key = os.getenv("siren_api_key")
-    siren_api_url = os.getenv("siren_api_url")
-
-
-    siren_api_client = SirenAPIClient(siren_api_url, siren_api_key=siren_api_key)
-
-    siren_data = siren_api_client.get_data_by_siren(siren)
-    siret_data = siren_api_client.get_data_by_siret(siret)
-
-    print(siren_data)
-    print(siret_data)
-
-
-
-
-    
