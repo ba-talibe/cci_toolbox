@@ -148,7 +148,7 @@ def process_judgements_columns(df):
             # Calcul de la date de fin
             pr["date_fin"] = pr["date"].apply(bi_date) + pr.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
         except Exception as e:
-            logging.error(f"Erreur lors du calcul de la date de fin pour le plan de redressement: {e}")
+            
             pr["date_fin"] = pd.NaT
 
         
@@ -188,7 +188,6 @@ def process_judgements_columns(df):
         try:
             ps["date_fin"] =  ps["date"].apply(bi_date) + ps.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
         except Exception as e:
-            logging.error(f"Erreur lors du calcul de la date de fin pour le plan de sauvegarde: {e}")
             ps["date_fin"] = pd.NaT
 
 
