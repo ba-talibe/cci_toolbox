@@ -1,3 +1,4 @@
+import re
 import os
 import requests
 from dotenv import load_dotenv
@@ -5,7 +6,7 @@ from typing import Optional, Dict, Any
 from .api_client import APIClient
 
 
-class SirenAPIClient():
+class SirenAPIClient(APIClient):
     """
     Client pour interagir avec une API REST.
     """
@@ -26,12 +27,33 @@ class SirenAPIClient():
         :param params: Paramètres de requête facultatifs.
         :return: Données JSON en réponse ou None en cas d'erreur.
         """
+        match = re.search(r"/(?:siren|siret)/(\d{9}|\d{14})", endpoint)
+        if match:
+            cache_key = match.group(0)
+            if cache_key == "siren":
+                cache_key = cache_key
+            elif cache_key == "siret":
+                cache_key = cache_key[:9]
+
+            cached_data = self._read_cache(cache_key)
+
+            if cache_key == "siren":    
+                return cached_data
+            elif cache_key == "siret":
+                for etablissement in cached_data:
+                    if etablissement.get("siret") == cache_key:
+                        return etablissement
+
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
             response = self.session.get(url, params=params)
             response.raise_for_status()
             # print(response.url)
-            return response.json()
+            data = response.json()
+
+            if cache_key == "siren":
+                self._write_cache(cache_key, data)
+            return data
         except requests.exceptions.HTTPError as e:
             print(f"[HTTP ERROR] {e} - Status: {response.status_code}")
         except requests.exceptions.RequestException as e:
@@ -63,7 +85,6 @@ class SirenAPIClient():
     def get_data_by_siren(self, siren: str, params : Optional[Dict[str, Any]]=None,) -> Optional[Dict[str, Any]]:
         """
         Récupère les données d'un etablissement pour un numéro SIREN donné.
-
         """
         endpoint = f"/siren/{siren}"
         data = self.get(endpoint)
@@ -76,7 +97,6 @@ class SirenAPIClient():
     def get_data_by_siret(self, siret: str, params : Optional[Dict[str, Any]]=None) -> Optional[Dict[str, Any]]:
         """
         Récupère les données SIRET pour un numéro SIRET donné.
-
         """
         endpoint = f"/siret/{siret}"
         data = self.get(endpoint)

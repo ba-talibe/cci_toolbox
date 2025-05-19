@@ -31,27 +31,27 @@ class APIClient(abc.ABC):
             os.makedirs(cache_dir, exist_ok=True)
         
       
-    def _get_cache_filepath(self, date: str) -> str:
+    def _get_cache_filepath(self, key: str) -> str:
         os.makedirs(self.cache_dir, exist_ok=True)
-        return os.path.join(self.cache_dir, f"{date}.json")
+        return os.path.join(self.cache_dir, f"{key}.json")
 
-    def _read_cache(self, date: str) -> Optional[list]:
-        filepath = self._get_cache_filepath(date)
+    def _read_cache(self, key: str) -> Optional[list]:
+        filepath = self._get_cache_filepath(key)
         if os.path.exists(filepath):
             try:
                 with open(filepath, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 if self.logger:
-                    self.logger.warning(f"Impossible de lire le cache pour {date}: {e}")
+                    self.logger.warning(f"Impossible de lire le cache pour {key}: {e}")
         return None
 
-    def _write_cache(self, date: str, data: list):
-        filepath = self._get_cache_filepath(date)
+    def _write_cache(self, key: str, data: list):
+        filepath = self._get_cache_filepath(key)
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             if self.logger:
-                self.logger.error(f"Impossible d'écrire le cache pour {date}: {e}")
+                self.logger.error(f"Impossible d'écrire le cache pour {key}: {e}")
     
