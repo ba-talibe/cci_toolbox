@@ -71,15 +71,17 @@ def convert_int_to_str_columns(df):
 
 
 def clean_columns(df):
-    def extraire_premier_registre(val):
-        if not isinstance(val, str):
-            return None
-        match = re.search(r"'([^']+)'", val)
-        if match:
-            return match.group(1)
+    def extraire_siren(val):
+        if  isinstance(val, str):
+            match = re.search(r"'([^']+)'", val)
+            if match:
+                return match.group(1)
+        elif isinstance(val, list):
+            if len(val) > 0:
+                return val[0]
         return None
 
-        df["SIREN"] = df["registre"].apply(extraire_premier_registre)
+    df["SIREN"] = df["registre"].apply(extraire_siren)
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
@@ -95,7 +97,21 @@ def filter_and_group(df, col, pattern):
     return df[mask].sort_values(by=["SIREN", "date"], ascending=[True, False]).drop_duplicates("SIREN")
 
 
+
+
+
 def process_judgements_columns(df):
+
+    def ajouter_duree(row):
+        base_date = bi_date(row["date"])
+        try:
+            return base_date + relativedelta(
+                years=int(row["duree_annes"] or 0),
+                months=int(row["duree_mois"] or 0)
+            )
+        except Exception:
+            return pd.NaT 
+
     lj = filter_and_group(df, "nature", r"jugement.*liquidation judiciaire")
     ljc = filter_and_group(df, "nature", r"arr..t.*cour.*appel")
     pr = filter_and_group(df, "nature", r"plan de redressement")
@@ -144,12 +160,9 @@ def process_judgements_columns(df):
 
         pr["duree_mois"] = mois
 
-        try:
-            # Calcul de la date de fin
-            pr["date_fin"] = pr["date"].apply(bi_date) + pr.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
-        except Exception as e:
-            
-            pr["date_fin"] = pd.NaT
+        
+        pr["date_fin"] = pr.apply(ajouter_duree, axis=1)
+       
 
         
     # --- Extraction durée de sauvegarde ---
@@ -185,10 +198,7 @@ def process_judgements_columns(df):
         ps["duree_mois"] = mois
 
         # Calcul de la date de fin
-        try:
-            ps["date_fin"] =  ps["date"].apply(bi_date) + ps.apply(lambda row: relativedelta(years=row["duree_annes"], months=row["duree_mois"]), axis=1)
-        except Exception as e:
-            ps["date_fin"] = pd.NaT
+        ps["date_fin"] = ps.apply(ajouter_duree, axis=1)
 
 
         # fusion des données de sauvegarde et de redressement

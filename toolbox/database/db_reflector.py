@@ -4,7 +4,7 @@ from typing import Optional, List
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import create_engine, MetaData, Table, text, Column,inspect
-from sqlalchemy.types import String, Integer, Float, Boolean, Date, DateTime
+from sqlalchemy.types import String, Integer, Float, Boolean, Date
 
 
 
@@ -94,13 +94,13 @@ class DBReflector:
     def map_dtype(self, dtype):
         """Mappe les dtypes pandas vers des types SQLAlchemy."""
         if pd.api.types.is_integer_dtype(dtype):
-            return Integer()
+            return String()
         elif pd.api.types.is_float_dtype(dtype):
-            return Float()
+            return String()
         elif pd.api.types.is_bool_dtype(dtype):
             return Boolean()
         elif pd.api.types.is_datetime64_any_dtype(dtype):
-            return DateTime()
+            return Date()
         else:
             return String()
 
