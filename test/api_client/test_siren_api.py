@@ -42,3 +42,16 @@ def test_get_json_decode_error(client):
     with patch("requests.Session.get", return_value=bad_response):
         result = client.get("/test")
         assert result is None
+
+def test_get_cache_key(client):
+    # Test avec un endpoint SIREN
+    endpoint = "/siren/123456789"
+    params = {"param1": "value1", "param2": "value2"}
+    expected_key = "siren__param1=value1_param2=value2"
+    assert client._generate_cache_key(endpoint, params) == expected_key
+
+    # Test avec un endpoint SIRET
+    endpoint = "/siret/12345678901234"
+    params = {"param1": "value1", "param2": "value2"}
+    expected_key = "siret__param1=value1_param2=value2"
+    assert client._generate_cache_key(endpoint, params) == expected_key
