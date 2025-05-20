@@ -29,29 +29,28 @@ class SirenAPIClient(APIClient):
         """
         match = re.search(r"/(?:siren|siret)/(\d{9}|\d{14})", endpoint)
         if match:
-            cache_key = match.group(0)
-            if cache_key == "siren":
-                cache_key = cache_key
-            elif cache_key == "siret":
-                cache_key = cache_key[:9]
-
+            data_type = match.group(0)
+            if data_type == "siren":
+                data_type = data_type
+            elif data_type == "siret":
+                data_type = data_type[:9]
+            cache_key = self._generate_cache_key(data_type, params)
             cached_data = self._read_cache(cache_key)
 
-            if cache_key == "siren":    
+            if data_type == "siren":    
                 return cached_data
-            elif cache_key == "siret":
+            elif data_type == "siret":
                 for etablissement in cached_data:
-                    if etablissement.get("siret") == cache_key:
+                    if etablissement.get("siret") == data_type:
                         return etablissement
 
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
             response = self.session.get(url, params=params)
             response.raise_for_status()
-            # print(response.url)
             data = response.json()
 
-            if cache_key == "siren":
+            if data_type == "siren":
                 self._write_cache(cache_key, data)
             return data
         except requests.exceptions.HTTPError as e:

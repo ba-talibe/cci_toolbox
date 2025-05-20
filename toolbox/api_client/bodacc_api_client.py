@@ -97,8 +97,8 @@ class BodaccAPIClient(APIClient):
         :return: Liste de dictionnaires contenant les données récupérées.
         """
 
-        # 1. Lire depuis le cache
-        cached_data = self._read_cache(date)
+        cache_key = self._generate_cache_key(date, queries)
+        cached_data = self._read_cache(cache_key)
         if cached_data is not None:
             if self.logger:
                 self.logger.info(f"Cache utilisé pour la date {date}")
@@ -132,7 +132,7 @@ class BodaccAPIClient(APIClient):
                 for row in fetched_data
             ]
 
-            self._write_cache(date, processed_data)
+            self._write_cache(cache_key, processed_data)
             return processed_data
         except Exception as e:
             print(f"❌ Erreur pour la date {date}: {e}")

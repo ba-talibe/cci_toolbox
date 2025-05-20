@@ -30,7 +30,20 @@ class APIClient(abc.ABC):
         if cache_dir:
             os.makedirs(cache_dir, exist_ok=True)
         
-      
+    def _generate_cache_key(self, key, queries):
+        """
+        Génère une clé de cache unique à partir de la clé principale et des paramètres.
+
+        :param key: Clé de base (ex: une date)
+        :param queries: Dictionnaire de paramètres
+        :return: Chaîne unique utilisable comme nom de fichier ou clé de cache
+        """
+        if not queries:
+            return key
+        parts = [f"{k}={v}" for k, v in sorted(queries.items())]
+        suffix = "_".join(parts).replace(" ", "_").replace("/", "-")
+        return f"{key}__{suffix}"
+
     def _get_cache_filepath(self, key: str) -> str:
         os.makedirs(self.cache_dir, exist_ok=True)
         return os.path.join(self.cache_dir, f"{key}.json")
