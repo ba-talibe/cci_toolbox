@@ -97,8 +97,8 @@ class BodaccAPIClient(APIClient):
         :return: Liste de dictionnaires contenant les données récupérées.
         """
 
-        # 1. Lire depuis le cache
-        cached_data = self._read_cache(date)
+        cache_key = self._generate_cache_key(date, queries)
+        cached_data = self._read_cache(cache_key)
         if cached_data is not None:
             if self.logger:
                 self.logger.info(f"Cache utilisé pour la date {date}")
@@ -132,7 +132,7 @@ class BodaccAPIClient(APIClient):
                 for row in fetched_data
             ]
 
-            self._write_cache(date, processed_data)
+            self._write_cache(cache_key, processed_data)
             return processed_data
         except Exception as e:
             print(f"❌ Erreur pour la date {date}: {e}")
@@ -166,29 +166,7 @@ class BodaccAPIClient(APIClient):
 
         return data
 
-if __name__ == "__main__":
-   
-    base_url = "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records"
-    params = {"filter": "example"}
 
-    headers = {}
-
-    query_list = [
-        ('refine', "familleavis_lib:\"Procédures collectives\""),
-        ('refine', "dateparution:2025-03-02")
-    ]
-
-    # Créer une instance du client API
-    bodacc_api_client = BodaccAPIClient(base_url, headers=headers)
-
-    # Appeler la méthode pour récupérer toutes les données
-    all_data = bodacc_api_client.fetch_all_data_from_api(query_list=query_list, headers=headers)
-    # Afficher le nombre total de résultats récupérés
-    print(f"Nombre total de résultats récupérés : {len(all_data)}")
-    # Afficher les 5 premiers résultats
-    print("Exemples de résultats :")
-    for result in all_data[:5]:
-        print(result)
 
 
    
