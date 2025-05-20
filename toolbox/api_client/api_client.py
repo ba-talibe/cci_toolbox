@@ -40,7 +40,11 @@ class APIClient(abc.ABC):
         """
         if not queries:
             return key
-        parts = [f"{k}={v}" for k, v in sorted(queries.items())]
+
+        # Tri des tuples par clé pour assurer une stabilité
+        sorted_queries = sorted(queries, key=lambda x: x[0])
+
+        parts = [f"{k}={v}" for k, v in sorted_queries]
         suffix = "_".join(parts).replace(" ", "_").replace("/", "-")
         return f"{key}__{suffix}"
 
