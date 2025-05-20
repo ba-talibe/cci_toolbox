@@ -1,6 +1,8 @@
 import os
+import json
 import requests
 import pandas as pd
+from .api_client import APIClient
 from datetime import datetime
 from urllib.parse import urlencode
 from typing import Optional, Dict, Any
@@ -9,30 +11,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 
-class BodaccAPIClient:
+class BodaccAPIClient(APIClient):
     """
     Client pour interagir avec une API REST.
     """
 
-    def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None, logger: Optional[Any] = None):
+    def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None, logger: Optional[Any] = None, cache_dir: Optional[str] = "bodacc_cache"):
         """
         Initialise le client API avec l'URL de base et les en-têtes par défaut. 
         assert base_url, "L'URL de base ne peut pas être vide."
-
         :param base_url: URL de base de l'API.
         :param headers: En-têtes par défaut à utiliser pour les requêtes.
         :param logger: Logger pour les messages d'information et d'erreur.
         """
-        self.base_url = base_url.rstrip('/')
-        self.session = requests.Session()
-        default_headers =  {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        if headers:
-            default_headers.update(headers)
-        self.session.headers.update(default_headers)
-        self.logger = logger
+        super().__init__(base_url, headers, logger, cache_dir)
 
 
 
@@ -104,6 +96,14 @@ class BodaccAPIClient:
         :param queries: Liste de tuples de requêtes supplémentaires.
         :return: Liste de dictionnaires contenant les données récupérées.
         """
+
+        cache_key = self._generate_cache_key(date, queries)
+        cached_data = self._read_cache(cache_key)
+        if cached_data is not None:
+            if self.logger:
+                self.logger.info(f"Cache utilisé pour la date {date}")
+            return cached_data
+    
         query_list = [
                     ('refine', 'familleavis_lib:"Procédures collectives"'),
                     ('refine', f"dateparution:{date}"),
@@ -118,7 +118,7 @@ class BodaccAPIClient:
                 query_list=query_list
             )
 
-            return [
+            processed_data = [
                 {
                     "id": row.get("id"),
                     "registre": row.get("registre"),
@@ -131,6 +131,9 @@ class BodaccAPIClient:
                 }
                 for row in fetched_data
             ]
+
+            self._write_cache(cache_key, processed_data)
+            return processed_data
         except Exception as e:
             print(f"❌ Erreur pour la date {date}: {e}")
             return []
@@ -163,28 +166,7 @@ class BodaccAPIClient:
 
         return data
 
-if __name__ == "__main__":
+
+
+
    
-    base_url = "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records"
-    params = {"filter": "example"}
-
-    headers = {}
-
-    query_list = [
-        ('refine', "familleavis_lib:\"Procédures collectives\""),
-        ('refine', "dateparution:2025-03-02")
-    ]
-
-    # Créer une instance du client API
-    bodacc_api_client = BodaccAPIClient(base_url, headers=headers)
-
-    # Appeler la méthode pour récupérer toutes les données
-    all_data = bodacc_api_client.fetch_all_data_from_api(query_list=query_list, headers=headers)
-    # Afficher le nombre total de résultats récupérés
-    print(f"Nombre total de résultats récupérés : {len(all_data)}")
-    # Afficher les 5 premiers résultats
-    print("Exemples de résultats :")
-    for result in all_data[:5]:
-        print(result)
-
-
