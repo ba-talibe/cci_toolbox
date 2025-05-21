@@ -8,6 +8,8 @@ PACKAGE_ROOT = ROOT / "toolbox"
 with open("requirements.txt", "r") as f:
     requirements = [pac[:-1] for pac in f.readlines()]
 
+
+
 setup(
     name="toolbox",
     description="collection de scripts pour le traitement de données",
