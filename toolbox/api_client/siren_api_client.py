@@ -27,13 +27,10 @@ class SirenAPIClient(APIClient):
         :param params: Paramètres de requête facultatifs.
         :return: Données JSON en réponse ou None en cas d'erreur.
         """
-        match = re.search(r"/(?:siren|siret)/(\d{9}|\d{14})", endpoint)
+        match = re.search(r"/(siren|siret)/(\d{9}|\d{14})", endpoint)
         if match:
-            data_type = match.group(0)
-            if data_type == "siren":
-                data_type = data_type
-            elif data_type == "siret":
-                data_type = data_type[:9]
+            data_type = match.group(1)  # 'siren' ou 'siret'
+            number = match.group(2)     # le numéro (9 ou 14 chiffres)      
             cache_key = self._generate_cache_key(data_type, params)
             cached_data = self._read_cache(cache_key)
 
@@ -41,7 +38,7 @@ class SirenAPIClient(APIClient):
                 return cached_data
             elif data_type == "siret":
                 for etablissement in cached_data:
-                    if etablissement.get("siret") == data_type:
+                    if etablissement.get("siret") == number:
                         return etablissement
 
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
