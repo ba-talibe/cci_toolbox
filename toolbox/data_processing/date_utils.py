@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 from datetime import datetime
+import pytz
 
 
 def mois_fr_vers_num(mois):
@@ -76,3 +77,17 @@ def bi_date(d):
     if d.month == 2 and d.day == 29:
         return datetime(d.year, 3, 1)
     return d
+
+def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Nettoie les colonnes de type date dans le DataFrame.
+    """
+    date_columns = [col for col in df.columns if "date" in col.lower()]
+
+    for col in date_columns:
+        try:
+            df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+        except Exception as e:
+            print(f"Erreur lors du traitement de la colonne {col}: {e}")
+
+    return df
