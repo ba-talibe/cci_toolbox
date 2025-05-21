@@ -1,5 +1,5 @@
 import re
-import pytz
+
 import json
 import pandas as pd
 import numpy as np
@@ -232,27 +232,6 @@ def remove_no_siren_rows(df):
     return df[~df["SIREN"].isnull() & (df["SIREN"] != "")]
 
 
-def clean_dates(df: pd.DataFrame, date_type : str ="date") -> pd.DataFrame:
-    paris_tz = pytz.timezone("Europe/Paris")
-
-    date_columns = [col for col in df.columns if "date" in col.lower()]
-
-    for col in date_columns:
-        try:
-            # Conversion en datetime, erreurs ignorées pour les valeurs non valides
-            df[col] = pd.to_datetime(df[col], errors='coerce')
-
-            # Localisation + conversion en ISO 8601 (optionnel selon données)
-            if date_type == "date":
-                df [col] = pd.to_datetime(df[col], errors='coerce').dt.normalize()
-            else:
-                df[col] = df[col].dt.tz_localize('Europe/Paris', ambiguous='NaT', nonexistent='NaT', errors='coerce') \
-                                .dt.tz_convert('UTC') \
-                                .dt.strftime('%Y-%m-%dT%H:%M:%SZ')  # ISO format en UTC
-        except Exception as e:
-            print(f"Erreur lors du traitement de la colonne {col}: {e}")
-
-    return df
 
 def clean_cleaning_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     """
