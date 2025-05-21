@@ -1,0 +1,2 @@
+pywin32>=310
+pywinpty>=2.0.15
