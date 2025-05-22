@@ -1,21 +1,22 @@
 import pytest
 import pandas as pd
-from io import StringIO
-from datetime import datetime
-from pandas.testing import assert_frame_equal
+from toolbox.api_client.bodacc_api_client import BodaccAPIClient
 from toolbox.data_processing.bodacc_utils import *
 
 # --- Fixtures de test ---
 
 @pytest.fixture
 def raw_dataframe():
-    return pd.read_csv("workspace//data_brute_76.csv")
+    client = BodaccAPIClient(
+        base_url="https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records"
+    )
+    data = client.fetch_and_clean_api_data("2025-05-01")
+    return pd.DataFrame(data)
 
 
 @pytest.fixture
-def df_with_jugement_extracted(raw_dataframe):
+def df_with_jugement_extracted():
     return extract_jugement_variable(raw_dataframe.copy())
-
 
 # --- Tests ---
 
@@ -55,8 +56,8 @@ def test_process_judgements_columns(df_with_jugement_extracted):
     assert df["date ouverture de liquidation judiciaire"].notnull().sum() > 1
 
 
-def test_clean_cleaning_pipeline(raw_dataframe):
-    cleaned = clean_cleaning_pipeline(raw_dataframe.copy())
+def test_clean_and_extract_ps(raw_dataframe):
+    cleaned = clean_and_extract_ps(raw_dataframe.copy())
 
     # Test colonnes clés
     expected_cols = [
