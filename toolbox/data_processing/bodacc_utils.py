@@ -118,7 +118,7 @@ def clean_columns(df):
             if len(val) > 0:
                 return val[0]
         return None
-
+    
     df["SIREN"] = df["registre"].apply(extraire_siren)
 
     # --- Nettoyage ponctuation ---
@@ -383,6 +383,8 @@ def clean_and_extract_ps(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Le DataFrame nettoyé et enrichi avec les informations sur les procédures judiciaires.
     """
+    if "siren" in df.columns:
+        df = df.rename(columns={"siren": "SIREN"})
     df = extract_jugement_variable(df)
     df = clean_columns(df)
     df = remove_no_siren_rows(df)
