@@ -353,6 +353,7 @@ def rename_columns(df):
     """
     df = df.rename(columns={
         "dateparution" : "date_parution",
+        "commercant" : 'raison_sociale',
         "numerodepartement" : "numero_departement",
         "numeroannonce" : "numero_annonce",
         "date plan de continuation" : "date_plan_continuation",
