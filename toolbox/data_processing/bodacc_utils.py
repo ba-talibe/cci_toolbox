@@ -96,10 +96,6 @@ def filter_and_group(df, col, pattern):
     mask = df[col].str.contains(pattern, case=False, regex=True, na=False)
     return df[mask].sort_values(by=["SIREN", "date"], ascending=[True, False]).drop_duplicates("SIREN")
 
-
-
-
-
 def process_judgements_columns(df):
 
     def ajouter_duree(row):
@@ -243,5 +239,7 @@ def clean_cleaning_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     df = clean_dates(df)
     df = convert_int_to_str_columns(df)
     df = process_judgements_columns(df)
+
+    df.columns = df.columns.map(clean_chaine)
 
     return df
