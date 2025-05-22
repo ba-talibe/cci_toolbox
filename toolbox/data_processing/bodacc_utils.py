@@ -123,7 +123,6 @@ def clean_columns(df):
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
-    df = df.rename(columns={"commercant": "raison_sociale"})
     df["complementJugement"] = df["complementJugement"].str.replace(";", " ", regex=False)
     df["registre"] = df["registre"].str.replace(";", ",", regex=False)
     df["nature"] = df["nature"].str.replace(";", ",", regex=False)
@@ -308,8 +307,39 @@ def remove_no_siren_rows(df):
     assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
     return df[~df["SIREN"].isnull() & (df["SIREN"] != "")]
 
+def rename_columns(df):
 
-def clean_and_extarct_ps(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Renomme les colonnes du DataFrame pour les rendre plus lisibles.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame avec les colonnes renommées.
+    """
+    df = df.rename(columns={
+        "dateparution" : "date_parution",
+        "numerodepartement" : "numero_departement",
+        "numeroannonce" : "numero_annonce",
+        "date plan de continuation" : "date_plan_continuation",
+        "date de plan de redressement" : "date_plan_redressement",
+        "date prevue fin de redressement" : "date_prevue_fin_redressement",
+        "date de plan de sauvegarde" : "date_plan_sauvegarde",
+        "date prevue fin de sauvegarde" : "date_prevue_fin_sauvegarde",
+        "date d_ouverture d_une procédure de sauvegarde" : "date_ouverture_une_procedure_sauvegarde",
+        "date de modification de plan de redressement" : "date_modification_plan_redressement",
+        "date ouverture de liquidation judiciaire"  : "date_ouverture_liquidation_judiciaire",
+        "date mettant fin à la procédure de redressement judiciaire" : "date_mettant_fin_procedure_redressement_judiciaire",
+        "date conversion en redressement judiciaire de la procédure de " :  "date_conversion_en_redressement_judiciaire_procedure", 
+        "date extension d_une procédure de redressement judiciaire" : "date_extension_procedure_redressement_judiciaire",
+        "date prononçant la résolution du plan de redressement et la l" : "date_prononcant_resolution_plan_redressement",
+        "date d_ouverture d_une procédure de redressement" : "date_ouverture_procedure_redressement",
+        "date de modification le plan de sauvegarde" : "date_modification_plan_sauvegarde",
+        "arrêt de la cour d_appel infirmant une décision soumise à pu" : "arret_cour_appel",
+    })
+    return df
+
+def clean_and_extract_ps(df: pd.DataFrame) -> pd.DataFrame:
     """
     Pipeline de nettoyage des données et extraction des informations sur les procédures de judiciaire.
 
@@ -324,7 +354,7 @@ def clean_and_extarct_ps(df: pd.DataFrame) -> pd.DataFrame:
     df = clean_dates(df)
     df = convert_int_to_str_columns(df)
     df = process_judgements_columns(df)
-
+    df = rename_columns(df)
     df.columns = df.columns.map(clean_chaine)
 
     return df
