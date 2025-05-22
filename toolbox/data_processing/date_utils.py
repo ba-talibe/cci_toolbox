@@ -28,6 +28,9 @@ def inverse_date(date_str):
         
 
 def remplacer_nombres_francais(chaine):
+    """
+    Remplace les nombres en français par leur équivalent numérique dans une chaîne de caractères.
+    """
     correspondances = {
         "onze": "11", "douze": "12", "treize": "13",
         "quatorze": "14", "quinze": "15", "seize": "16",

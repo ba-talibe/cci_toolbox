@@ -65,10 +65,6 @@ def clean_chaine(chaine):
         - conservant les suites de majuscules comme un seul mot
         - remplaçant les doubles underscores par un seul underscore
         - Convertissant en minuscules
-    Args: 
-        chaine (str): La chaine de caractères à nettoyer.
-    Returns:
-        str: La chaine de caractères nettoyée.
     """
     # Remplacer les '.' par '_'
     chaine = chaine.replace('.', '_')
