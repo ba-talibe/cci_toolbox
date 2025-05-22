@@ -13,6 +13,11 @@ from .str_utils import *
 def create_jugement_variable_extractor(variable_name):
     """
     Crée une fonction pour extraire une variable spécifique du champ 'jugement'.
+
+    Args:
+        variable_name (str): Le nom de la variable à extraire.
+    Returns:
+        function: Une fonction qui prend une ligne du DataFrame et renvoie la valeur de la variable spécifiée.
     """
     def extract_variable(row):
         try:
@@ -23,6 +28,15 @@ def create_jugement_variable_extractor(variable_name):
     return extract_variable
 
 def corriger_caracteres_speciaux(text, corrections=corrections_caracteres):
+    """
+    Corrige les caractères spéciaux dans le texte en utilisant un dictionnaire de corrections.
+
+    Args:
+        text (str): Le texte à corriger.
+        corrections (dict): Un dictionnaire de corrections où la clé est le mauvais caractère et la valeur est le bon caractère.
+    Returns:
+        str: Le texte corrigé.
+    """
     if pd.isnull(text):
         return text
     for mauvais, bon in corrections.items():
@@ -32,6 +46,11 @@ def corriger_caracteres_speciaux(text, corrections=corrections_caracteres):
 def extract_jugement_variable(dataframe : pd.DataFrame):
     """
     Extrait une variable spécifique du champ 'jugement' dans le DataFrame.
+
+    Args:
+        dataframe (pd.DataFrame): Le DataFrame contenant la colonne 'jugement'.
+    Returns:
+        pd.DataFrame: Le DataFrame avec les champs 'date', 'complementJugement', 'type', 'famille' et 'nature' extraits du champ 'jugement'.
     """
     assert "jugement" in dataframe.columns, "La colonne 'jugement' n'existe pas dans le DataFrame."
 
@@ -64,6 +83,11 @@ def extract_jugement_variable(dataframe : pd.DataFrame):
 def convert_int_to_str_columns(df):
     """
     Convertit les colonnes de type int64 en str64
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame avec les colonnes int64 converties en str64.
     """
     for col in df.select_dtypes(include=["int64"]).columns:
         df[col] = df[col].astype(str)
@@ -71,6 +95,20 @@ def convert_int_to_str_columns(df):
 
 
 def clean_columns(df):
+    """
+    Nettoie les colonnes du DataFrame en supprimant les espaces et en remplaçant les caractères spéciaux.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame avec les colonnes nettoyées.
+    """
+    assert "registre" in df.columns, "La colonne 'registre' n'existe pas dans le DataFrame."
+    assert "commercant" in df.columns, "La colonne 'commercant' n'existe pas dans le DataFrame."
+    assert "complementJugement" in df.columns, "La colonne 'complementJugement' n'existe pas dans le DataFrame."
+    assert "nature" in df.columns, "La colonne 'nature' n'existe pas dans le DataFrame."
+    assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
+
     def extraire_siren(val):
         if  isinstance(val, str):
             match = re.search(r"'([^']+)'", val)
@@ -85,6 +123,7 @@ def clean_columns(df):
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
+    df = df.rename(columns={"commercant": "raison_sociale"})
     df["complementJugement"] = df["complementJugement"].str.replace(";", " ", regex=False)
     df["registre"] = df["registre"].str.replace(";", ",", regex=False)
     df["nature"] = df["nature"].str.replace(";", ",", regex=False)
@@ -93,12 +132,49 @@ def clean_columns(df):
 
 
 def filter_and_group(df, col, pattern):
+    """
+    Filtre le DataFrame en fonction d'un motif dans une colonne donnée et groupe les résultats.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+        col (str): Le nom de la colonne à filtrer.
+        pattern (str): Le motif à rechercher dans la colonne.
+    """
+    assert col in df.columns, f"La colonne '{col}' n'existe pas dans le DataFrame."
+    assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
+    assert "date" in df.columns, "La colonne 'date' n'existe pas dans le DataFrame."
+
+
     mask = df[col].str.contains(pattern, case=False, regex=True, na=False)
     return df[mask].sort_values(by=["SIREN", "date"], ascending=[True, False]).drop_duplicates("SIREN")
 
 def process_judgements_columns(df):
+    """
+    Traite les colonnes de jugement pour extraire les informations pertinentes.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame avec les colonnes de jugement traitées.
+    """
+    assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
+    assert "date" in df.columns, "La colonne 'date' n'existe pas dans le DataFrame."
+    assert "nature" in df.columns, "La colonne 'nature' n'existe pas dans le DataFrame."
+    assert "complementJugement" in df.columns, "La colonne 'complementJugement' n'existe pas dans le DataFrame."
+
 
     def ajouter_duree(row):
+        """
+        Ajoute la durée de redressement ou de sauvegarde à la date de jugement.
+
+        Args:
+            row (pd.Series): Une ligne du DataFrame contenant les colonnes 'date', 'duree_annes' et 'duree_mois'.
+        Returns:
+            datetime: La date de fin de la procédure.
+        """
+        assert "date" in row, "La colonne 'date' n'existe pas dans la ligne."
+        assert "duree_annes" in row, "La colonne 'duree_annes' n'existe pas dans la ligne."
+        assert "duree_mois" in row, "La colonne 'duree_mois' n'existe pas dans la ligne."
         base_date = bi_date(row["date"])
         try:
             return base_date + relativedelta(
@@ -196,7 +272,6 @@ def process_judgements_columns(df):
         # Calcul de la date de fin
         ps["date_fin"] = ps.apply(ajouter_duree, axis=1)
 
-
         # fusion des données de sauvegarde et de redressement
 
         
@@ -224,14 +299,24 @@ def process_judgements_columns(df):
 def remove_no_siren_rows(df):
     """
     Supprime les lignes sans SIREN
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame sans les lignes sans SIREN.
     """
+    assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
     return df[~df["SIREN"].isnull() & (df["SIREN"] != "")]
 
 
-
-def clean_cleaning_pipeline(df: pd.DataFrame) -> pd.DataFrame:
+def clean_and_extarct_ps(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Pipeline de nettoyage des données
+    Pipeline de nettoyage des données et extraction des informations sur les procédures de judiciaire.
+
+    Args:
+        df (pd.DataFrame): Le DataFrame à traiter.
+    Returns:
+        pd.DataFrame: Le DataFrame nettoyé et enrichi avec les informations sur les procédures judiciaires.
     """
     df = extract_jugement_variable(df)
     df = clean_columns(df)
