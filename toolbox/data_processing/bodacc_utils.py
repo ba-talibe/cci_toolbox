@@ -120,7 +120,7 @@ def clean_columns(df):
         return None
     
     df["SIREN"] = df["registre"].apply(extraire_siren)
-    df = df.remove_columns(["registre"])
+    df.drop(columns=["registre"], inplace=True)
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
