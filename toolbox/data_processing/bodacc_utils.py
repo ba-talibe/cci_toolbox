@@ -120,11 +120,11 @@ def clean_columns(df):
         return None
     
     df["SIREN"] = df["registre"].apply(extraire_siren)
+    df = df.remove_columns(["registre"])
 
     # --- Nettoyage ponctuation ---
     df["commercant"] = df["commercant"].str.replace(";", " ", regex=False)
     df["complementJugement"] = df["complementJugement"].str.replace(";", " ", regex=False)
-    df["registre"] = df["registre"].str.replace(";", ",", regex=False)
     df["nature"] = df["nature"].str.replace(";", ",", regex=False)
 
     return df
@@ -250,7 +250,7 @@ def process_judgements_columns(df):
 
         pr["duree_mois"] = mois
 
-        
+
         pr["date_fin"] = pr.apply(ajouter_duree, axis=1)
        
 
