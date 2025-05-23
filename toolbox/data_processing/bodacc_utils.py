@@ -162,21 +162,7 @@ def rename_columns(df):
         "dateparution" : "date_parution",
         "numerodepartement" : "numero_departement",
         "numeroannonce" : "numero_annonce",
-        "date plan de continuation" : "date_plan_continuation",
-        "date de plan de redressement" : "date_plan_redressement",
-        "date prevue fin de redressement" : "date_prevue_fin_redressement",
-        "date de plan de sauvegarde" : "date_plan_sauvegarde",
-        "date prevue fin de sauvegarde" : "date_prevue_fin_sauvegarde",
-        "date d_ouverture d_une procédure de sauvegarde" : "date_ouverture_une_procedure_sauvegarde",
-        "date de modification de plan de redressement" : "date_modification_plan_redressement",
-        "date ouverture de liquidation judiciaire"  : "date_ouverture_liquidation_judiciaire",
-        "date mettant fin à la procédure de redressement judiciaire" : "date_mettant_fin_procedure_redressement_judiciaire",
-        "date conversion en redressement judiciaire de la procédure de " :  "date_conversion_en_redressement_judiciaire_procedure", 
-        "date extension d_une procédure de redressement judiciaire" : "date_extension_procedure_redressement_judiciaire",
-        "date prononçant la résolution du plan de redressement et la l" : "date_prononcant_resolution_plan_redressement",
-        "date d_ouverture d_une procédure de redressement" : "date_ouverture_procedure_redressement",
-        "date de modification le plan de sauvegarde" : "date_modification_plan_sauvegarde",
-        "arrêt de la cour d_appel infirmant une décision soumise à pu" : "arret_cour_appel",
+        "commercant" : 'raison_sociale',
     })
     return df
 
@@ -309,21 +295,21 @@ def process_judgements_columns(df):
         
     status = df.copy()
     # 2. Fusion des dates selon chaque procédure
-    status["date plan de continuation"] = status["SIREN"].map(pc.set_index("SIREN")["date"])
-    status["date de plan de redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date"])
-    status["date prevue fin de redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date_fin"])
-    status["date de plan de sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date"])
-    status["date prevue fin de sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date_fin"])
-    status["date d_ouverture d_une procédure de sauvegarde"] = status["SIREN"].map(ouv_ps.set_index("SIREN")["date"])
-    status["date de modification de plan de redressement"] = status["SIREN"].map(mod_p.set_index("SIREN")["date"])
-    status["date ouverture de liquidation judiciaire"] = status["SIREN"].map(lj.set_index("SIREN")["date"])
-    status["date mettant fin à la procédure de redressement judiciaire"] = status["SIREN"].map(fpr.set_index("SIREN")["date"])
-    status["date conversion en redressement judiciaire de la procédure de sauvegarde"] = status["SIREN"].map(xr_to_sauv.set_index("SIREN")["date"])
-    status["date extension d_une procédure de redressement judiciaire"] = status["SIREN"].map(xpr.set_index("SIREN")["date"])
-    status["date prononçant la résolution du plan de redressement et la liquidation judiciaire"] = status["SIREN"].map(pro_pr.set_index("SIREN")["date"])
-    status["date d_ouverture d_une procédure de redressement"] = status["SIREN"].map(ouv_pr.set_index("SIREN")["date"])
-    status["date de modification le plan de sauvegarde"] = status["SIREN"].map(mod_ps.set_index("SIREN")["date"])
-    status["arrêt de la cour d_appel infirmant une décision soumise à publicité"] = status["SIREN"].map(ljc.set_index("SIREN")["date"])
+    status["date_plan_continuation"] = status["SIREN"].map(pc.set_index("SIREN")["date"])
+    status["date_plan_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date"])
+    status["date_prevue_fin_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date_fin"])
+    status["date_plan_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date"])
+    status["date_prevue_fin_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date_fin"])
+    status["date_ouverture_une_procedure_sauvegarde"] = status["SIREN"].map(ouv_ps.set_index("SIREN")["date"])
+    status["date_modification_plan_redressement"] = status["SIREN"].map(mod_p.set_index("SIREN")["date"])
+    status["date_ouverture_liquidation_judiciaire"] = status["SIREN"].map(lj.set_index("SIREN")["date"])
+    status["date_mettant_fin_procedure_redressement_judiciaire"] = status["SIREN"].map(fpr.set_index("SIREN")["date"])
+    status["date_conversion_en_redressement_judiciaire_procedure"] = status["SIREN"].map(xr_to_sauv.set_index("SIREN")["date"])
+    status["date_extension_procedure_redressement_judiciaire"] = status["SIREN"].map(xpr.set_index("SIREN")["date"])
+    status["date_prononcant_resolution_plan_redressement"] = status["SIREN"].map(pro_pr.set_index("SIREN")["date"])
+    status["date_ouverture_procedure_redressement"] = status["SIREN"].map(ouv_pr.set_index("SIREN")["date"])
+    status["date_modification_plan_sauvegarde"] = status["SIREN"].map(mod_ps.set_index("SIREN")["date"])
+    status["arret_cour_appel"] = status["SIREN"].map(ljc.set_index("SIREN")["date"])
     status = rename_columns(status)
     return status
 
@@ -355,22 +341,7 @@ def rename_columns(df):
         "dateparution" : "date_parution",
         "commercant" : 'raison_sociale',
         "numerodepartement" : "numero_departement",
-        "numeroannonce" : "numero_annonce",
-        "date plan de continuation" : "date_plan_continuation",
-        "date de plan de redressement" : "date_plan_redressement",
-        "date prevue fin de redressement" : "date_prevue_fin_redressement",
-        "date de plan de sauvegarde" : "date_plan_sauvegarde",
-        "date prevue fin de sauvegarde" : "date_prevue_fin_sauvegarde",
-        "date d_ouverture d_une procédure de sauvegarde" : "date_ouverture_une_procedure_sauvegarde",
-        "date de modification de plan de redressement" : "date_modification_plan_redressement",
-        "date ouverture de liquidation judiciaire"  : "date_ouverture_liquidation_judiciaire",
-        "date mettant fin à la procédure de redressement judiciaire" : "date_mettant_fin_procedure_redressement_judiciaire",
-        "date conversion en redressement judiciaire de la procédure de " :  "date_conversion_en_redressement_judiciaire_procedure", 
-        "date extension d_une procédure de redressement judiciaire" : "date_extension_procedure_redressement_judiciaire",
-        "date prononçant la résolution du plan de redressement et la l" : "date_prononcant_resolution_plan_redressement",
-        "date d_ouverture d_une procédure de redressement" : "date_ouverture_procedure_redressement",
-        "date de modification le plan de sauvegarde" : "date_modification_plan_sauvegarde",
-        "arrêt de la cour d_appel infirmant une décision soumise à pu" : "arret_cour_appel",
+        "numeroannonce" : "numero_annonce"
     })
     return df
 
@@ -392,7 +363,6 @@ def clean_and_extract_ps(df: pd.DataFrame) -> pd.DataFrame:
     df = clean_dates(df)
     df = convert_int_to_str_columns(df)
     df = process_judgements_columns(df)
-    df = rename_columns(df)
     df.columns = df.columns.map(clean_chaine)
 
     return df
