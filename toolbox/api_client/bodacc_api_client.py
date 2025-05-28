@@ -166,7 +166,7 @@ class BodaccAPIClient(APIClient):
 
         return data
     
-    def fetch_data_for_sirens(self, sirens, queries=None):
+    def fetch_data_for_sirens(self, sirens, queries=None, max_workers=5):
         """
         Appelle l'API pour une liste de SIRENs et structure les résultats.
 
@@ -190,7 +190,7 @@ class BodaccAPIClient(APIClient):
             query_list.extend(queries)
 
         data = pd.DataFrame()
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             query_list =[ [
                 ('refine', 'familleavis_lib:"Procédures collectives"'),
                 ('refine', f"registre:{siren}"),
