@@ -165,6 +165,44 @@ class BodaccAPIClient(APIClient):
         data = pd.DataFrame(data)
 
         return data
+    
+    def fetch_data_for_sirens(self, sirens, queries=None):
+        """
+        Appelle l'API pour une liste de SIRENs et structure les résultats.
+
+        :param sirens: Liste de SIRENs à interroger.
+        :param queries: Liste de tuples de requêtes supplémentaires.
+        :return: Liste de dictionnaires contenant les données récupérées.
+        """
+        cache_key = self._generate_cache_key(sirens, queries)
+        cached_data = self._read_cache(cache_key)
+        if cached_data is not None:
+            if self.logger:
+                self.logger.info(f"Cache utilisé pour les SIRENs {sirens}")
+            return cached_data
+
+        query_list = [
+            ('refine', 'familleavis_lib:"Procédures collectives"'),
+            ('refine', f"SIREN:{','.join(sirens)}"),
+        ]
+
+        if queries:
+            query_list.extend(queries)
+
+        data = pd.DataFrame()
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            query_list =[ [
+                ('refine', 'familleavis_lib:"Procédures collectives"'),
+                ('refine', f"registre:{siren}"),
+            ] for siren in sirens ]
+            futures = [
+                executor.submit(self.fetch_all_data_from_api, query)
+                for query in query_list
+            ]
+            for future in as_completed(futures):
+                data = pd.concat([data, pd.DataFrame(future.result())], ignore_index=True)
+
+        return data
 
 
 
