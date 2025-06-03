@@ -181,10 +181,6 @@ class BodaccAPIClient(APIClient):
                 self.logger.info(f"Cache utilisé pour les SIRENs {sirens}")
             return cached_data
 
-        query_list = [
-            ('refine', 'familleavis_lib:"Procédures collectives"'),
-            ('refine', f"SIREN:{','.join(sirens)}"),
-        ]
 
         if queries:
             query_list.extend(queries)
