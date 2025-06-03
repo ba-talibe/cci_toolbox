@@ -194,14 +194,18 @@ class BodaccAPIClient(APIClient):
             query_list =[ [
                 ('refine', 'familleavis_lib:"Procédures collectives"'),
                 ('refine', f"registre:{siren}"),
-            ] for siren in sirens ]
+            ] for siren in sirens]
             futures = [
                 executor.submit(self.fetch_all_data_from_api, query)
                 for query in query_list
             ]
             for future in as_completed(futures):
-                data = pd.concat([data, pd.DataFrame(future.result())], ignore_index=True)
-
+                try:
+                    data = pd.concat([data, pd.DataFrame(future.result())], ignore_index=True)
+                except Exception as e:
+                    if self.logger:
+                        self.logger.error(f"Erreur lors de la récupération des données pour un SIREN : {e}")
+                        self.logger.error(f"Requête échouée : {future}")
         return data
 
 
