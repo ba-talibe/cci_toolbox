@@ -71,7 +71,8 @@ class BodaccAPIClient(APIClient):
 
         # Étape 2 : Générer tous les offsets nécessaires
         offsets = list(range(limit, total_count, limit))  # on a déjà fait l'offset 0
-
+        if self.logger:
+            self.logger.info(f"Offsets à traiter : {offsets}")
         all_results = first_results.copy()
 
         # Étape 3 : Télécharger les pages suivantes en parallèle
@@ -189,10 +190,7 @@ class BodaccAPIClient(APIClient):
 
         data = pd.DataFrame()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            query_list =[[
-                *base_queries
-                ('refine', f"registre:{siren}"),
-            ] for siren in sirens]
+            query_list =[base_queries.extend([('refine', f"registre:{siren}")]) for siren in sirens]
             futures = [
                 executor.submit(self.fetch_all_data_from_api, query)
                 for query in query_list

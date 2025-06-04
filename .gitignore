@@ -20,7 +20,8 @@ env/
 
 .env
 *.env
-
+*.yaml
+*.yml
 *.csv
 
 .spyproject
