@@ -181,14 +181,16 @@ class BodaccAPIClient(APIClient):
                 self.logger.info(f"Cache utilisé pour les SIRENs {sirens}")
             return cached_data
 
-
+        base_queries = [
+            ('refine', 'familleavis_lib:"Procédures collectives"'),
+        ]
         if queries:
-            query_list.extend(queries)
+            base_queries.extend(queries)
 
         data = pd.DataFrame()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            query_list =[ [
-                ('refine', 'familleavis_lib:"Procédures collectives"'),
+            query_list =[[
+                *base_queries
                 ('refine', f"registre:{siren}"),
             ] for siren in sirens]
             futures = [
