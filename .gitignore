@@ -3,6 +3,8 @@ env/
 *.pyc
 *.pyo
 *.pyd
+*.ipynb
+*.ipynb_checkpoints
 *.db
 *.sqlite3
 *.log
