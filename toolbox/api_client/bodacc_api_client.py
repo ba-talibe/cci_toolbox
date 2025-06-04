@@ -55,8 +55,10 @@ class BodaccAPIClient(APIClient):
         limit = 100
 
         # Étape 1 : Obtenir le total_count
+
         first_query = query_list + [('limit', str(limit)), ('offset', '0')]
         first_url = f"{self.base_url}?{urlencode(first_query, doseq=True)}"
+        print(f"Requête initiale : {first_url}")
         if headers:
             self.session.headers.update(headers)
         response = requests.get(first_url, headers=self.session.headers)
@@ -149,9 +151,9 @@ class BodaccAPIClient(APIClient):
 
 
         # 2. Créer une plage de dates journalières entre D et aujourd'hui
-        date_range = pd.date_range(start=start_date, end=datetime.today(), freq='D')
+        date_range = pd.date_range(start=start_date, end=datetime.now(), freq='D')
         date_range = date_range.strftime("%Y-%m-%d").tolist()  
-    
+
 
         new_data = pd.DataFrame(columns=interesting_columns)
         data = []
@@ -163,9 +165,7 @@ class BodaccAPIClient(APIClient):
             for future in as_completed(futures):
                 data.extend(future.result())
 
-        data = pd.DataFrame(data)
-
-        return data
+        return pd.DataFrame(data)
     
     def fetch_data_for_sirens(self, sirens, queries=None, max_workers=5):
         """
@@ -190,7 +190,8 @@ class BodaccAPIClient(APIClient):
 
         data = pd.DataFrame()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            query_list =[base_queries.extend([('refine', f"registre:{siren}")]) for siren in sirens]
+            query_model = base_queries.copy()
+            query_list =[query_model + [('refine', f"registre:{siren}")] for siren in sirens]
             futures = [
                 executor.submit(self.fetch_all_data_from_api, query)
                 for query in query_list
