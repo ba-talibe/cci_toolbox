@@ -107,18 +107,21 @@ def clean_columns(df):
     assert "commercant" in df.columns, "La colonne 'commercant' n'existe pas dans le DataFrame."
     assert "complementJugement" in df.columns, "La colonne 'complementJugement' n'existe pas dans le DataFrame."
     assert "nature" in df.columns, "La colonne 'nature' n'existe pas dans le DataFrame."
-    assert "SIREN" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
+    
+    if "SIREN" not in df.columns:
+        df["SIREN"] = df["registre"].apply(lambda x: x[1] if isinstance(x, list) and len(x) > 0 else None)
+
 
     def extraire_siren(val):
-        if  isinstance(val, str):
+        if isinstance(val, str):
             match = re.search(r"'([^']+)'", val)
             if match:
-                return match.group(1)
+                return match[1]
         elif isinstance(val, list):
             if len(val) > 0:
                 return val[0]
         return None
-    
+
     df["SIREN"] = df["registre"].apply(extraire_siren)
     df.drop(columns=["registre"], inplace=True)
 
@@ -226,13 +229,13 @@ def process_judgements_columns(df):
         cm = []
         for texte in pr["complementJugement"]:
             extrait = re.search(r"(.{2,10})\s(?:ans|annees|annee|années|année|an|nomme)", str(texte))
-            brut = extrait.group(1) if extrait else ""
+            brut = extrait[1] if extrait else ""
             cm.append(remplacer_nombres_francais(brut))
-        
+
         annes = []
         for txt in cm:
             extrait = re.search(r"(\d+)", str(txt))
-            annes.append(int(extrait.group(1)) if extrait else 0)
+            annes.append(int(extrait[1]) if extrait else 0)
 
         pr["duree_annes"] = annes
 
@@ -240,7 +243,7 @@ def process_judgements_columns(df):
         cm = []
         for texte in pr["complementJugement"]:
             extrait = re.search(r"(.{2,10})\smois", str(texte))
-            brut = extrait.group(1) if extrait else ""
+            brut = extrait[1] if extrait else ""
             cm.append(remplacer_nombres_francais(brut))
 
         mois = []
@@ -252,9 +255,9 @@ def process_judgements_columns(df):
 
 
         pr["date_fin"] = pr.apply(ajouter_duree, axis=1)
-       
 
-        
+
+
     # --- Extraction durée de sauvegarde ---
     if not ps.empty:
         ps["complementJugement"] = ps["complementJugement"].apply(ajouter_espace)
@@ -292,7 +295,7 @@ def process_judgements_columns(df):
 
         # fusion des données de sauvegarde et de redressement
 
-        
+
     status = df.copy()
     # 2. Fusion des dates selon chaque procédure
     status["date_plan_continuation"] = status["SIREN"].map(pc.set_index("SIREN")["date"])

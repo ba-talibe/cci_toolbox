@@ -77,9 +77,7 @@ def bi_date(d):
     if isinstance(d, str):
         d = pd.to_datetime(d, errors="coerce")
 
-    if d.month == 2 and d.day == 29:
-        return datetime(d.year, 3, 1)
-    return d
+    return datetime(d.year, 3, 1) if d.month == 2 and d.day == 29 else d
 
 def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
     """
