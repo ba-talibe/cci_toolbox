@@ -41,32 +41,28 @@ class TableRepository:
         stmt = select(self.table).limit(limit)
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
-            if return_df:
-                return self.__return_df(result)
-            else:   
-                return result.fetchall()
+            return self.__return_df(result) if return_df else result.fetchall()
 
-    def find_by_column(self, column_name: str, value, columns=None, return_df=False):
+    def find_by_column(self, column_name: str, value, columns=None, return_df=False, distinct=False):
         if column_name not in self.table.columns:
             raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
-    
+
         # Vérification des colonnes demandées
         if columns:
-            invalid_cols = [col for col in columns if col not in self.table.columns]
-            if invalid_cols:
+            if invalid_cols := [
+                col for col in columns if col not in self.table.columns
+            ]:
                 raise ValueError(f"Colonnes demandées non valides : {invalid_cols}")
             selected_columns = [self.table.c[col] for col in columns]
         else:
             selected_columns = [self.table]  # Sélectionne toutes les colonnes
-
+        if distinct:
+            selected_columns = [func.distinct(col) for col in selected_columns]
         stmt = select(*selected_columns).where(self.table.c[column_name] == value)
 
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
-            if return_df:
-                return self.__return_df(result)
-            else:
-                return result.fetchall()
+            return self.__return_df(result) if return_df else result.fetchall()
     
     def find_by_conditions(self, conditions: dict, logical_operator='AND', columns=None, limit=100):
         """
@@ -79,19 +75,21 @@ class TableRepository:
         if not conditions:
             raise ValueError("Aucune condition fournie.")
 
-        invalid_cols = [col for col in conditions if col not in self.table.columns]
-        if invalid_cols:
+        if invalid_cols := [
+            col for col in conditions if col not in self.table.columns
+        ]:
             raise ValueError(f"Colonnes inexistantes : {invalid_cols}")
 
         # Vérification des colonnes demandées
         if columns:
-            invalid_cols = [col for col in columns if col not in self.table.columns]
-            if invalid_cols:
+            if invalid_cols := [
+                col for col in columns if col not in self.table.columns
+            ]:
                 raise ValueError(f"Colonnes demandées non valides : {invalid_cols}")
             selected_columns = [self.table.c[col] for col in columns]
         else:
             selected_columns = [self.table]  # Sélectionne toutes les colonnes
-        
+
         expressions = [
             self.table.c[col] == val
             for col, val in conditions.items()
