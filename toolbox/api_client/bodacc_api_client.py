@@ -142,7 +142,7 @@ class BodaccAPIClient(APIClient):
             return []
 
 
-    def fetch_and_clean_api_data(self, start_date, queries=None, max_workers=5):
+    def fetch_and_clean_api_data(self, start_date, queries=None, max_workers=5, end_date=datetime.now()):
         """
         Récupère et nettoie les données de l'API pour un département donné.
         """
@@ -151,7 +151,7 @@ class BodaccAPIClient(APIClient):
 
 
         # 2. Créer une plage de dates journalières entre D et aujourd'hui
-        date_range = pd.date_range(start=start_date, end=datetime.now(), freq='D')
+        date_range = pd.date_range(start=start_date, end=end_date, freq='D')
         date_range = date_range.strftime("%Y-%m-%d").tolist()  
 
 
