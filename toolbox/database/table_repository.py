@@ -43,7 +43,7 @@ class TableRepository:
             result = conn.execute(stmt)
             return self.__return_df(result) if return_df else result.fetchall()
 
-    def find_by_column(self, column_name: str, value, columns=None, return_df=False, distinct=False):
+    def find_by_column(self, column_name: str = None, value=None, columns=None, return_df=False, distinct=False):
         if column_name not in self.table.columns:
             raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
 
@@ -58,8 +58,16 @@ class TableRepository:
             selected_columns = [self.table]  # Sélectionne toutes les colonnes
         if distinct:
             selected_columns = [func.distinct(col) for col in selected_columns]
-        stmt = select(*selected_columns).where(self.table.c[column_name] == value)
+        if column_name:
+            if value is None:
+                raise ValueError("La valeur ne peut pas être None si column_name est spécifié.")
+            stmt = select(*selected_columns).where(self.table.c[column_name] == value)
+        elif value is None:
+            stmt = select(*selected_columns)
 
+        else:
+            raise ValueError("La valeur doit être None si column_name n'est pas spécifié.")
+        
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             return self.__return_df(result) if return_df else result.fetchall()
