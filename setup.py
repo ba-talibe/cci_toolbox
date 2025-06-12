@@ -13,7 +13,7 @@ with open("requirements.txt", "r") as f:
 setup(
     name="toolbox",
     description="collection de scripts pour le traitement de données",
-    version="0.5.0",
+    version="0.5.1",
     packages=find_packages(),
     install_requires=requirements,
 )

@@ -44,8 +44,7 @@ class TableRepository:
             return self.__return_df(result) if return_df else result.fetchall()
 
     def find_by_column(self, column_name: str = None, value=None, columns=None, return_df=False, distinct=False):
-        if column_name not in self.table.columns:
-            raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
+        
 
         # Vérification des colonnes demandées
         if columns:
@@ -59,12 +58,14 @@ class TableRepository:
         if distinct:
             selected_columns = [func.distinct(col) for col in selected_columns]
         if column_name:
+            if column_name not in self.table.columns:
+                raise ValueError(f"La colonne '{column_name}' n'existe pas dans la table.")
+
             if value is None:
                 raise ValueError("La valeur ne peut pas être None si column_name est spécifié.")
             stmt = select(*selected_columns).where(self.table.c[column_name] == value)
         elif value is None:
             stmt = select(*selected_columns)
-
         else:
             raise ValueError("La valeur doit être None si column_name n'est pas spécifié.")
         
