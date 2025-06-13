@@ -95,3 +95,23 @@ def nettoyage_texte(txt):
     txt = re.sub(r"\s+", " ", txt)
     return txt.strip().lower()
 
+
+def is_valide_siren_siret(numero: str) -> bool:
+    """
+    Valide un numéro SIREN (9 chiffres) ou SIRET (14 chiffres) à l'aide de l'algorithme de Luhn.
+    
+    :param numero: Chaîne représentant le numéro à valider.
+    :return: True si le numéro est valide, False sinon.
+    """
+    if not re.fullmatch(r"\d{9}|\d{14}", numero):
+        return False
+
+    total = 0
+    reverse_digits = list(map(int, reversed(numero)))
+    for i, digit in enumerate(reverse_digits):
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        total += digit
+    return total % 10 == 0
