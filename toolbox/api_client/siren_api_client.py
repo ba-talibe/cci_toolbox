@@ -27,19 +27,18 @@ class SirenAPIClient(APIClient):
         :param params: Paramètres de requête facultatifs.
         :return: Données JSON en réponse ou None en cas d'erreur.
         """
-        match = re.search(r"/(siren|siret)/(\d{9}|\d{14})", endpoint)
-        if match:
-            data_type = match.group(1)  # 'siren' ou 'siret'
-            number = match.group(2)     # le numéro (9 ou 14 chiffres)      
+        if match := re.search(r"/(siren|siret)/(\d{9}|\d{14})", endpoint):
+            data_type = match[1]
+            number = match[2]
             cache_key = self._generate_cache_key(data_type, params)
             cached_data = self._read_cache(cache_key)
-
-            if data_type == "siren":    
-                return cached_data
-            elif data_type == "siret":
-                for etablissement in cached_data:
-                    if etablissement.get("siret") == number:
-                        return etablissement
+            if cached_data is not None:
+                if data_type == "siren":    
+                    return cached_data
+                elif data_type == "siret":
+                    for etablissement in cached_data:
+                        if etablissement.get("siret") == number:
+                            return etablissement
 
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
@@ -69,11 +68,7 @@ class SirenAPIClient(APIClient):
         for key, value in params.items():
             sub_query = f"{key}:{value}"
 
-        if historized:
-            params = {'q':f"periode({sub_query})"}
-        else:
-            params = {'q': sub_query}
-
+        params = {'q':f"periode({sub_query})"} if historized else {'q': sub_query}
         return self.get(endpoint, params=params)
 
 
@@ -83,12 +78,10 @@ class SirenAPIClient(APIClient):
         Récupère les données d'un etablissement pour un numéro SIREN donné.
         """
         endpoint = f"/siren/{siren}"
-        data = self.get(endpoint)
-        if data:
+        if data := self.get(endpoint):
             return data
-        else:
-            print(f"Erreur lors de la récupération des données pour le SIREN {siren}.")
-            return None
+        print(f"Erreur lors de la récupération des données pour le SIREN {siren}.")
+        return None
 
     def get_data_by_siret(self, siret: str, params : Optional[Dict[str, Any]]=None) -> Optional[Dict[str, Any]]:
         """
