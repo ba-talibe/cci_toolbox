@@ -16,9 +16,12 @@ logger = get_logger()
 
 
 class DBReflector:
-    def __init__(self, user: str, host: str="localhost", port: int = 5432, dbname: str="postgres"):
+    def __init__(self, user: str, password: str=None, host: str="localhost", port: int = 5432, dbname: str="postgres"):
         
-        self.connection_string = f"postgresql+psycopg2://{user}@{host}:{port}/{dbname}"
+        user_and_password = user
+        if password is not None:
+            user_and_password += f":{password}"
+        self.connection_string = f"postgresql+psycopg2://{user_and_password}@{host}:{port}/{dbname}"
         self.engine: Optional[Engine] = None
         self.metadata: Optional[MetaData] = None
         self.connection: Optional[Connection] = None

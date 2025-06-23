@@ -17,6 +17,7 @@ def parse_connection_string(connection_string: str) -> dict:
             'user': 'usr_ccin_stage',
             'host': '10.254.10.3',
             'port': '5432'
+            'password': 'votre_mot_de_passe'  # si présent dans la chaîne
         }
     """
     parts = connection_string.strip().split()
