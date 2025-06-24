@@ -300,9 +300,14 @@ def process_judgements_columns(df):
     # 2. Fusion des dates selon chaque procédure
     status["date_plan_continuation"] = status["SIREN"].map(pc.set_index("SIREN")["date"])
     status["date_plan_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date"])
-    status["date_prevue_fin_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date_fin"])
+    if not pr.empty:
+        status["date_fin_plan_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date_fin"])
+        status["date_prevue_fin_redressement"] = status["SIREN"].map(pr.set_index("SIREN")["date_fin"])
+    if not ps.empty:
+        status["date_fin_plan_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date_fin"])
+        status["date_prevue_fin_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date_fin"])
+   
     status["date_plan_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date"])
-    status["date_prevue_fin_sauvegarde"] = status["SIREN"].map(ps.set_index("SIREN")["date_fin"])
     status["date_ouverture_une_procedure_sauvegarde"] = status["SIREN"].map(ouv_ps.set_index("SIREN")["date"])
     status["date_modification_plan_redressement"] = status["SIREN"].map(mod_p.set_index("SIREN")["date"])
     status["date_ouverture_liquidation_judiciaire"] = status["SIREN"].map(lj.set_index("SIREN")["date"])
