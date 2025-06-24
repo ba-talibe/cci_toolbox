@@ -3,7 +3,6 @@ requests
 urllib3
 
 #module d'l='acces aux base de données
-psycopg2
 psycopg2-binary
 SQLAlchemy
 
@@ -14,10 +13,5 @@ modin
 
 # module utilitaires
 python-dotenv
-PyYAML
-
-
-
-# modules annexes
 pytest
-PyYAML
+
