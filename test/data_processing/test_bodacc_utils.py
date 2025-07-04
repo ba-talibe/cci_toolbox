@@ -10,7 +10,7 @@ def raw_dataframe():
     client = BodaccAPIClient(
         base_url="https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records"
     )
-    data = client.fetch_and_clean_api_data("2025-05-01")
+    data = client.fetch_and_reduce_ps_data("2025-05-01")
     return pd.DataFrame(data)
 
 
