@@ -7,6 +7,13 @@ from datetime import datetime
 from urllib.parse import urlencode
 from typing import Optional, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from ..schemas.bodacc_schemas import (
+    UnProcessedProcedureCollective,
+    ProcessedProcedureCollective,
+    UnProcessedVenteCession,
+    ProcessedVenteCession
+)
+
 
 
 
@@ -26,6 +33,9 @@ class BodaccAPIClient(APIClient):
         """
         super().__init__(base_url, headers, logger, cache_dir)
 
+        # Ajout fr pointeur de fonction pour assurer la compatibilité avec les anciens appels
+
+        self.fetch_and_clean_api_data = self.fetch_and_reduce_ps_data
 
 
     def fetch_chunck(self, query_list,  offset, limit, headers=None):
@@ -90,7 +100,7 @@ class BodaccAPIClient(APIClient):
         return all_results
 
     
-    def fetch_data_for_date(self, date, queries=None):
+    def fetch_data_for_date(self, date,  familleavis_lib=None, queries=None):
         """
         Appelle l'API pour une date donnée et structure les résultats.
 
@@ -108,7 +118,7 @@ class BodaccAPIClient(APIClient):
             return cached_data
     
         query_list = [
-                    ('refine', 'familleavis_lib:"Procédures collectives"'),
+                    ('refine', 'familleavis_lib:"' + familleavis_lib + '"'),
                     ('refine', f"dateparution:{date}"),
                 ]
 
@@ -120,19 +130,20 @@ class BodaccAPIClient(APIClient):
             fetched_data = self.fetch_all_data_from_api(
                 query_list=query_list
             )
+            print(fetched_data)
+            data_class = None
+            if familleavis_lib == "Procédures collectives":
+                data_class = UnProcessedProcedureCollective
+            elif familleavis_lib == "Ventes et cessions":
+                data_class = UnProcessedVenteCession
+            else:
+                data_class = None
 
+            if data_class is None:
+                
+                return fetched_data
             processed_data = [
-                {
-                    "id": row.get("id"),
-                    "registre": row.get("registre"),
-                    "dateparution": row.get("dateparution"),
-                    "numerodepartement": row.get("numerodepartement"),
-                    "commercant": row.get("commercant"),
-                    "jugement": row.get("jugement"),
-                    "numeroannonce": row.get("numeroannonce"),
-                    "SIREN": row.get("registre")[0] if row.get("registre") else None,
-                }
-                for row in fetched_data
+               data_class.from_dict(row) for row in fetched_data
             ]
 
             self._write_cache(cache_key, processed_data)
@@ -141,33 +152,58 @@ class BodaccAPIClient(APIClient):
             print(f"❌ Erreur pour la date {date}: {e}")
             return []
 
-
-    def fetch_and_clean_api_data(self, start_date, queries=None, max_workers=5, end_date=datetime.now()):
+    def fetch_data_since_date(self, start_date, interesting_columns=None, end_date=datetime.now(), queries=None, familleavis_lib=None):
         """
-        Récupère et nettoie les données de l'API pour un département donné.
+        Récupère les données de l'API depuis une date donnée jusqu'à aujourd'hui.
+
+        :param start_date: Date de début au format 'YYYY-MM-DD'.
+        :param queries: Liste de tuples de requêtes supplémentaires.
+        :param familleavis_lib: Libellé de la famille d'avis à filtrer.
+        :param end_date: Date de fin au format 'YYYY-MM-DD'. Par défaut,
+        :return: DataFrame contenant les données récupérées.
         """
-        interesting_columns = ["id", "registre", "dateparution", "numerodepartement", "commercant", "jugement", "numeroannonce", "SIREN"]
-
-
-
         # 2. Créer une plage de dates journalières entre D et aujourd'hui
         date_range = pd.date_range(start=start_date, end=end_date, freq='D')
         date_range = date_range.strftime("%Y-%m-%d").tolist()  
 
 
-        new_data = pd.DataFrame(columns=interesting_columns)
+        
+        print()
         data = []
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
-                executor.submit(self.fetch_data_for_date, date, queries)
+                executor.submit(self.fetch_data_for_date, date, familleavis_lib, queries)
                 for date in date_range
             ]
             for future in as_completed(futures):
                 data.extend(future.result())
-
         return pd.DataFrame(data)
+
     
-    def fetch_data_for_sirens(self, sirens, queries=None, max_workers=5):
+    def fetch_and_reduce_ps_data(self, start_date, queries=None, max_workers=5, end_date=datetime.now()):
+        """
+        Récupère et nettoie les données de l'API pour un département donné.
+        """
+
+
+        familleavis_lib = "Procédures collectives"
+        interesting_columns = UnProcessedProcedureCollective.get_fields()
+        # 1. Récupérer les données depuis la date de début jusqu'à aujourd'hui
+        return self.fetch_data_since_date(start_date, interesting_columns, end_date, queries, familleavis_lib)
+
+    
+    def fetch_and_reduce_vc_data(self, start_date, queries=None, max_workers=5, end_date=datetime.now()):
+        """
+        Récupère et nettoie les données de l'API pour les ventes et cessions.
+        """
+        familleavis_lib = "Ventes et cessions"
+        interesting_columns = UnProcessedVenteCession.get_fields()
+        # 1. Récupérer les données depuis la date de début jusqu'à aujourd'hui
+        print(interesting_columns)
+        return self.fetch_data_since_date(start_date, interesting_columns, end_date, queries, familleavis_lib)
+
+    
+    def fetch_data_for_sirens(self, sirens, queries=None, max_workers=5, familleavis_lib=None):
         """
         Appelle l'API pour une liste de SIRENs et structure les résultats.
 
@@ -183,7 +219,7 @@ class BodaccAPIClient(APIClient):
             return cached_data
 
         base_queries = [
-            ('refine', 'familleavis_lib:"Procédures collectives"'),
+            ('refine', 'familleavis_lib:"' + familleavis_lib + '"'),
         ]
         if queries:
             base_queries.extend(queries)
