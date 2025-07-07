@@ -28,6 +28,8 @@ toolbox/
         base_repository.py        # Requêtes SQL génériques
         db_reflector.py           # Réflexion et création de tables (SQLAlchemy)
         table_repository.py       # Accès orienté table (SQLAlchemy)
+    schemas/
+        bodacc_schemas.py         # Schémas de données pour BODACC
     utils/
         logger.py                 # Logger configuré (console + fichier)
         config.py                 # Chargement de configuration YAML
