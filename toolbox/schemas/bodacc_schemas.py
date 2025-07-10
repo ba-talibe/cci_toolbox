@@ -18,6 +18,7 @@ class UnProcessedProcedureCollective:
     commercant: str
     jugement: str
     numeroannonce: str
+    registre : Any
     SIREN: Optional[str] = None
 
     @classmethod
@@ -30,7 +31,7 @@ class UnProcessedProcedureCollective:
         return [field.name for field in cls.__dataclass_fields__.values()]
 
     @classmethod
-    def from_dict(cls, row: Dict[str, Any]) -> 'UnProcessedProcédureCollective':
+    def from_dict(cls, row: Dict[str, Any]) -> 'UnProcessedProcedureCollective':
         """
         Crée une instance de UnProcessedProcédureCollective à partir d'une ligne de résultat SQL.
 
@@ -44,6 +45,7 @@ class UnProcessedProcedureCollective:
             commercant=row.get('commercant'),
             jugement=row.get('jugement'),
             numeroannonce=row.get('numeroannonce'),
+            registre=row.get("registre"),
             SIREN=row.get("registre")[0] if row.get("registre") else None
         )
 
@@ -90,6 +92,8 @@ class ProcessedProcedureCollective:
 class UnProcessedVenteCession:
     """
     Représente une vente ou cession. 
+    Cette classe est utilisée pour stocker les données brutes d'une vente ou cession avant traitement.
+    Les champs sont basés sur les colonnes de la table "annonces commerciales" de l'API BODACC.
     """
     # 'id', 'dateparution', 'numeroannonce', 'typeavis', 'typeavis_lib', 'familleavis', 'familleavis_lib', 'numerodepartement', 'departement_nom_officiel',
     # 'region_code', 'region_nom_officiel', 'tribunal', 'commercant', 'ville', 'regiAnye', 'cp', 'pdf_parution_subfolder', 'listepersonnes', 'listeetablissements', 

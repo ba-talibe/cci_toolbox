@@ -68,7 +68,6 @@ class BodaccAPIClient(APIClient):
 
         first_query = query_list + [('limit', str(limit)), ('offset', '0')]
         first_url = f"{self.base_url}?{urlencode(first_query, doseq=True)}"
-        print(f"Requête initiale : {first_url}")
         if headers:
             self.session.headers.update(headers)
         response = requests.get(first_url, headers=self.session.headers)
@@ -130,7 +129,6 @@ class BodaccAPIClient(APIClient):
             fetched_data = self.fetch_all_data_from_api(
                 query_list=query_list
             )
-            print(fetched_data)
             data_class = None
             if familleavis_lib == "Procédures collectives":
                 data_class = UnProcessedProcedureCollective
@@ -152,7 +150,7 @@ class BodaccAPIClient(APIClient):
             print(f"❌ Erreur pour la date {date}: {e}")
             return []
 
-    def fetch_data_since_date(self, start_date, interesting_columns=None, end_date=datetime.now(), queries=None, familleavis_lib=None):
+    def fetch_data_since_date(self, start_date, end_date=datetime.now(), queries=None, familleavis_lib=None):
         """
         Récupère les données de l'API depuis une date donnée jusqu'à aujourd'hui.
 
@@ -168,7 +166,6 @@ class BodaccAPIClient(APIClient):
 
 
         
-        print()
         data = []
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
@@ -187,9 +184,8 @@ class BodaccAPIClient(APIClient):
 
 
         familleavis_lib = "Procédures collectives"
-        interesting_columns = UnProcessedProcedureCollective.get_fields()
         # 1. Récupérer les données depuis la date de début jusqu'à aujourd'hui
-        return self.fetch_data_since_date(start_date, interesting_columns, end_date, queries, familleavis_lib)
+        return self.fetch_data_since_date(start_date, end_date, queries, familleavis_lib)
 
     
     def fetch_and_reduce_vc_data(self, start_date, queries=None, max_workers=5, end_date=datetime.now()):
@@ -197,10 +193,8 @@ class BodaccAPIClient(APIClient):
         Récupère et nettoie les données de l'API pour les ventes et cessions.
         """
         familleavis_lib = "Ventes et cessions"
-        interesting_columns = UnProcessedVenteCession.get_fields()
         # 1. Récupérer les données depuis la date de début jusqu'à aujourd'hui
-        print(interesting_columns)
-        return self.fetch_data_since_date(start_date, interesting_columns, end_date, queries, familleavis_lib)
+        return self.fetch_data_since_date(start_date, end_date, queries, familleavis_lib)
 
     
     def fetch_data_for_sirens(self, sirens, queries=None, max_workers=5, familleavis_lib=None):
