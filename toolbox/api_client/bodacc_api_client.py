@@ -221,7 +221,8 @@ class BodaccAPIClient(APIClient):
         data = pd.DataFrame()
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             query_model = base_queries.copy()
-            query_list =[query_model + [('refine', f"registre:{siren}")] for siren in sirens]
+            where_query = ('where', f"registre in ({','.join([f'\'{siren}\'' for siren in sirens])})")
+            query_list = [query_model + [where_query]]
             futures = [
                 executor.submit(self.fetch_all_data_from_api, query)
                 for query in query_list
@@ -234,8 +235,3 @@ class BodaccAPIClient(APIClient):
                         self.logger.error(f"Erreur lors de la récupération des données pour un SIREN : {e}")
                         self.logger.error(f"Requête échouée : {future}")
         return data
-
-
-
-
-   
