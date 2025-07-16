@@ -269,7 +269,7 @@ class BodaccAPIClient(APIClient):
             queries = []
 
         queries = queries + [
-            ('refine', f"code_region:{code_region}"),
+            ('refine', f"region_code:{code_region}"),
             ('refine', f"familleavis_lib:'{familleavis_lib}'"),
             ('where', f"dateparution >= date'{start_date}' and dateparution <= date'{end_date}'")
         ]
