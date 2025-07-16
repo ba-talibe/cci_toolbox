@@ -35,7 +35,9 @@ class BodaccAPIClient(APIClient):
 
         # Ajout fr pointeur de fonction pour assurer la compatibilité avec les anciens appels
 
-        self.fetch_and_clean_api_data = self.fetch_and_reduce_ps_data
+        # ChangeLog: 2024-01-15
+        # On n'utilise plus fetch_and_reduce_ps_data et fetch_and_reduce_vc_data
+        # self.fetch_and_clean_api_data = self.fetch_and_reduce_ps_data
 
 
     def fetch_chunck(self, query_list,  offset, limit, headers=None):
@@ -100,7 +102,7 @@ class BodaccAPIClient(APIClient):
 
     # ChangeLog: 2024-01-15
     # On n'utilise plus cette méthode, on utilise fetch_data_since_date
-    
+
     
     # def fetch_data_for_date(self, date,  familleavis_lib=None, queries=None):
     #     """
