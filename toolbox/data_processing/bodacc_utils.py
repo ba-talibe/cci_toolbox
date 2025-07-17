@@ -361,7 +361,7 @@ def extract_missing_siren(df):
     Returns:
         pd.DataFrame: Le DataFrame avec les lignes sans SIREN extraites et renommées.
     """
-    assert "listepers" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
+    assert "listepersonnes" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
     missing_siren = df[df["SIREN"].isnull() | (df["SIREN"] == "")]
     missing_siren = missing_siren.rename(columns={"raison_sociale": "raison_sociale_sans_siren"})
     return missing_siren
@@ -380,7 +380,7 @@ def clean_and_extract_ps(df: pd.DataFrame) -> pd.DataFrame:
         df = df.rename(columns={"siren": "SIREN"})
     df = extract_jugement_variable(df)
     df = clean_columns(df)
-    df = extract_missing_siren(df)
+    #df = extract_missing_siren(df)
     # df = remove_no_siren_rows(df)
     df = clean_dates(df)
     df = convert_int_to_str_columns(df)
