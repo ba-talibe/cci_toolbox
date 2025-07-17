@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy import Table, MetaData, select, and_, or_, func
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 from ..utils import get_logger  # Assure-toi que ton logger est bien importé
 
@@ -139,3 +140,25 @@ class TableRepository:
         if not result:
             return pd.DataFrame()
         return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+    def upsert(self, df: pd.DataFrame, confilct_col):
+        """
+        Insère ou met à jour les données d'un DataFrame dans la table.
+        :param df: pandas DataFrame à insérer
+        :param if_exists: 'fail' | 'replace' | 'append'
+        """²
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError("L'argument 'df' doit être un pandas DataFrame.")
+        
+        stmt = insert(self.table).values(df.to_dict(orient='records'))
+        update_cols = {col.name: stmt.excluded[col.name] for col in self.table.columns if col.name != confilct_col}
+
+        upsert_stmt = stmt.on_conflict_do_update(
+            index_elements=[confilct_col],  # Clé unique
+            set_=update_cols
+        )
+
+        with self.engine.begin() as conn:
+            conn.execute(upsert_stmt)
+
+      
