@@ -146,7 +146,7 @@ class TableRepository:
         Insère ou met à jour les données d'un DataFrame dans la table.
         :param df: pandas DataFrame à insérer
         :param if_exists: 'fail' | 'replace' | 'append'
-        """²
+        """
         if not isinstance(df, pd.DataFrame):
             raise ValueError("L'argument 'df' doit être un pandas DataFrame.")
         
