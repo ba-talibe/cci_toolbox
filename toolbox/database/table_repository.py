@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import Table, MetaData, select, and_, or_, func
+from sqlalchemy import Table, MetaData, select, and_, or_, func, null
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 from ..utils import get_logger  # Assure-toi que ton logger est bien importé
@@ -134,6 +134,18 @@ class TableRepository:
         with self.engine.connect() as conn:
             result = conn.execute(stmt)
             return result.fetchall()
+    
+    def __is_compatible(self, df: pd.DataFrame):
+        """
+        Vérifie si le DataFrame est compatible avec la table.
+        :param df: pandas DataFrame à vérifier
+        :return: bool
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise ValueError("L'argument 'df' doit être un pandas DataFrame.")
+        if not set(df.columns).issubset( set(self.get_columns())):
+            raise ValueError("Les colonnes du DataFrame ne correspondent pas à celles de la table.")
+        return True
 
     def __return_df(self, result):
         """Convertit le résultat en DataFrame."""
@@ -147,9 +159,20 @@ class TableRepository:
         :param df: pandas DataFrame à insérer
         :param if_exists: 'fail' | 'replace' | 'append'
         """
+        assert self.__is_compatible(df), "Le DataFrame n'est pas compatible avec la table."
+        assert isinstance(confilct_col, str), "Le nom de la colonne de conflit doit être une chaîne de caractères."
+        if confilct_col not in self.get_columns():
+            raise ValueError(f"La colonne '{confilct_col}' n'existe pas dans la table.")
         if not isinstance(df, pd.DataFrame):
             raise ValueError("L'argument 'df' doit être un pandas DataFrame.")
         
+        df = df.copy()
+        table_columns = self.get_columns()
+        for col in df.columns:
+            if col not in table_columns:
+                df = df.drop(columns=col)
+        df = df.fillna(null())
+
         stmt = insert(self.table).values(df.to_dict(orient='records'))
         update_cols = {col.name: stmt.excluded[col.name] for col in self.table.columns if col.name != confilct_col}
 
