@@ -143,7 +143,7 @@ class TableRepository:
         """
         if not isinstance(df, pd.DataFrame):
             raise ValueError("L'argument 'df' doit être un pandas DataFrame.")
-        if not set(df.columns).issubset( set(self.get_columns())):
+        if not set(df.columns).issuperset(set(self.get_columns())):
             raise ValueError("Les colonnes du DataFrame ne correspondent pas à celles de la table.")
         return True
 
