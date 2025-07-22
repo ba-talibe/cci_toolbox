@@ -119,10 +119,12 @@ def clean_columns(df):
                 return match[1]
         elif isinstance(val, list):
             if len(val) > 0:
-                return val[0]
+                return val[-1]
         return None
 
     df["SIREN"] = df["registre"].apply(extraire_siren)
+    df["SIREN"] = df["SIREN"].str.replace(" ", "", regex=False)  # Suppression des espaces dans le SIREN
+    df["SIREN"] = df["SIREN"].str.zfill(9)  # Remplissage à 9 caractères
     df.drop(columns=["registre"], inplace=True)
 
     # --- Nettoyage ponctuation ---
@@ -362,8 +364,7 @@ def extract_missing_siren(df):
         pd.DataFrame: Le DataFrame avec les lignes sans SIREN extraites et renommées.
     """
     assert "listepersonnes" in df.columns, "La colonne 'SIREN' n'existe pas dans le DataFrame."
-    missing_siren = df[df["SIREN"].isnull() | (df["SIREN"] == "")]
-    missing_siren = missing_siren.rename(columns={"raison_sociale": "raison_sociale_sans_siren"})
+    
     return missing_siren
 
 
@@ -380,7 +381,7 @@ def clean_and_extract_ps(df: pd.DataFrame) -> pd.DataFrame:
         df = df.rename(columns={"siren": "SIREN"})
     df = extract_jugement_variable(df)
     df = clean_columns(df)
-    #df = extract_missing_siren(df)
+    #df = extract_missing_siren(df) # fonction 
     # df = remove_no_siren_rows(df)
     df = clean_dates(df)
     df = convert_int_to_str_columns(df)
