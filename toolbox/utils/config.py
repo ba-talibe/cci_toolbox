@@ -1,16 +1,32 @@
 import os
 import yaml
+import configparser
 import dotenv
 # Charger les variables d'environnement depuis un fichier .env
 dotenv.load_dotenv()
 
 # Charger la configuration
-def load_config(path="config.yaml"):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+def load_yaml_config(path="config.yaml"):
+    try:
+      with open(path, "r") as f:
+          return yaml.safe_load(f)
+    except Exception as e:
+      print(f"Erreur lors du chargement de la configuration depuis {path}: {e}")
+      return {}
+
+def load_ini_config(path="config.ini"):
+    try:
+        config = configparser.ConfigParser()
+        config.read(path)
+        return {section: dict(config.items(section)) for section in config.sections()}
+    except Exception as e:
+        print(f"Erreur lors du chargement de la configuration depuis {path}: {e}")
+        return {}
+
 
 # Exemple d'utilisation
-config = load_config()
+config = load_yaml_config()
+config.update(load_ini_config())
 # print(config)
 
 if "cci_database" not in config:
